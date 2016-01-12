@@ -4,7 +4,7 @@ function [ posterior_samples ] = sample_posterior(X, Y, Theta_user, model_parame
 
     %% Parameters
     num_output_samples = 200;
-    N = 25000; %chain lenght
+    N = 15000; %chain lenght
     num_MC = 3; %number of chains
     num_features = size(X,1);
     % initialization
@@ -34,14 +34,14 @@ function [ posterior_samples ] = sample_posterior(X, Y, Theta_user, model_parame
                 rejection_rate = rejection_rate + 1;
             end    
         end
-        rejection_rate = (N-rejection_rate)/N
+        rejection_rate = (N-rejection_rate)/N;
     end
     
     %remove the first half of the chains (burn-in)
     MCs(1:N/2,:,:) = [];
     %convergenec analysis       
-    [R,neff,Vh,W,B,tau] = psrf(MCs);
-    R
+%     [R,neff,Vh,W,B,tau] = psrf(MCs);
+%     R
     thinning = 1:ceil(num_MC*size(MCs,1)/num_output_samples):size(MCs,1);
     posterior_samples = [];
     for i=1:num_MC
