@@ -10,18 +10,21 @@ num_features = 10;
 num_traingdata = 3;
 
 %model parameters
-model_parameters = struct('Nu_y',1, 'Nu_theta', 3, 'Nu_user', 0.05);
+model_parameters = struct('Nu_y',0.2, 'Nu_theta', 3, 'Nu_user', 0.05);
 
 %Algorithm parameters
 num_iterations = 10;
 num_methods = 4; %number of decision making methods that we want to consider
-num_runs = 10; 
+num_runs = 8; 
 %% Simulator setup
 %assume a linear finction
 theta_star = [0.2;0.7;1];
 theta_star = [theta_star; zeros(num_features-size(theta_star,1),1)];
-X = 4*rand(num_features,num_traingdata);
-X_unknown = 4*rand(num_features,100); % These are Xs with unknown drug responses
+X = rand(num_features,num_traingdata);
+X = X./repmat(sqrt(sum(X.^2)),num_features,1); %normalize X into a unit vector
+X_unknown = rand(num_features,100); % These are Xs with unknown drug responses
+X_unknown = X_unknown./repmat(sqrt(sum(X_unknown.^2)),num_features,1); %normalize X into a unit vector
+X_all = [X,X_unknown]';
 Y = normrnd(X'*theta_star, model_parameters.Nu_y);
 % load ('XY')
 save('XY','X','Y');
@@ -37,7 +40,7 @@ for method = 1:num_methods
         for it = 1:num_iterations
             posterior_samples = sample_posterior(X, Y, Theta_user, model_parameters);
             Posterior_mean = mean(posterior_samples);
-            Loss_1(method, it, run) = sum(([X,X_unknown]'*(Posterior_mean'-theta_star)).^2);
+            Loss_1(method, it, run) = sum((X_all*Posterior_mean'- X_all*theta_star).^2);
             Loss_2(method, it, run) = sum((Posterior_mean'-theta_star).^2);       
             %make decisions based on a decision policy
             feature_index = decision_policy(posterior_samples, method);
