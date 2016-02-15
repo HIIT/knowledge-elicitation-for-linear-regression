@@ -7,26 +7,37 @@ load('results')
 num_methods = size(decisions,1);
 num_iterations = size(decisions,2);
 num_runs = size(decisions,3);
+Method_list = char('90% UCB','Uniformly random','random on the relevelant features','max variance', 'Max(UCB,LCB)');
 
 figure
 plot(mean(Loss_1,3)','.-');
-legend('90% UCB','Uniformly random','random on the relevelant features','max variance', 'Max(UCB,LCB)')
+legend(Method_list)
 title('Loss function')
 xlabel('number of expert feedbacks')
 ylabel('Loss value X(theta - theta*)')
 
 figure
 plot(mean(Loss_2,3)','.-');
-legend('90% UCB','Uniformly random','random on the relevelant features','max variance', 'Max(UCB,LCB)')
+legend(Method_list)
 title('Loss function')
 xlabel('number of expert feedbacks')
 ylabel('Loss value (theta - theta*)')
 
+
+
+% hold on
 for method =1 : num_methods
     figure
-    data = reshape(decisions(method,:,:),[num_iterations*num_runs,1]);
-    hist(data,10)
+    plot(decisions(method,:,1)','.');
+    legend(Method_list(method,:));
 end
+% legend(Method_list)
 
+% for method =1 : num_methods
+%     figure
+%     data = reshape(decisions(method,:,:),[num_iterations*num_runs,1]);
+%     hist(data,10)
+% end
+% 
 
     
