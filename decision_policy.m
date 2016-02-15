@@ -19,6 +19,12 @@ function [ selected_feature ] = decision_policy( posterior , Method, num_nonzero
         VARs = diag(posterior.sigma);
         [~,selected_feature]= max(VARs);
     end
+    if Method == 5 %Combination of UCB and LCB
+        % Assume that the features of Theta are independent
+        % use 0.9 percentile for now       
+        UBs = abs(posterior.mean) + 1.28155 * sqrt(diag(posterior.sigma));
+        [~,selected_feature] = max(UBs);
+    end    
              
 
 end

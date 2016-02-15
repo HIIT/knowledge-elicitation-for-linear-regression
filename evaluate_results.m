@@ -10,14 +10,14 @@ num_runs = size(decisions,3);
 
 figure
 plot(mean(Loss_1,3)','.-');
-legend('90% UCB','Uniformly random','random on the relevelant features','max variance')
+legend('90% UCB','Uniformly random','random on the relevelant features','max variance', 'Max(UCB,LCB)')
 title('Loss function')
 xlabel('number of expert feedbacks')
 ylabel('Loss value X(theta - theta*)')
 
 figure
 plot(mean(Loss_2,3)','.-');
-legend('90% UCB','Uniformly random','random on the relevelant features','max variance')
+legend('90% UCB','Uniformly random','random on the relevelant features','max variance', 'Max(UCB,LCB)')
 title('Loss function')
 xlabel('number of expert feedbacks')
 ylabel('Loss value (theta - theta*)')

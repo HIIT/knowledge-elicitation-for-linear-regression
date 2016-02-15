@@ -12,7 +12,7 @@ model_parameters = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
 
 %Algorithm parameters
 num_iterations = 100;
-num_methods = 4; %number of decision making methods that we want to consider
+num_methods = 5; %number of decision making methods that we want to consider
 num_runs = 50; 
 %% Simulator setup
 %assume a linear finction
