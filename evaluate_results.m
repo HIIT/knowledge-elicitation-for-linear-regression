@@ -1,8 +1,7 @@
 clear all
 close all
 
-load('Loss_functions')
-load('decisions')
+load('results')
 
 
 num_methods = size(decisions,1);
@@ -11,17 +10,17 @@ num_runs = size(decisions,3);
 
 figure
 plot(mean(Loss_1,3)','.-');
-legend('UCB','Uniformly random','random on the relevelant features','max variance')
+legend('90% UCB','Uniformly random','random on the relevelant features','max variance')
 title('Loss function')
 xlabel('number of expert feedbacks')
-ylabel('Loss value X(theta-theta_star)')
+ylabel('Loss value X(theta - theta*)')
 
 figure
 plot(mean(Loss_2,3)','.-');
-legend('UCB','Uniformly random','random on the relevelant features','max variance')
+legend('90% UCB','Uniformly random','random on the relevelant features','max variance')
 title('Loss function')
 xlabel('number of expert feedbacks')
-ylabel('Loss value (theta-theta_star)')
+ylabel('Loss value (theta - theta*)')
 
 for method =1 : num_methods
     figure

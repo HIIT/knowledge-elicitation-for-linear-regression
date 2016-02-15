@@ -1,24 +1,25 @@
-function [ selected_feature ] = decision_policy( posterior_samples , Method )
+function [ selected_feature ] = decision_policy( posterior , Method, num_nonzero_features )
 %DECISION_POLICY chooses one of the features to show to the user
     %Method = 1: UCB, 2: random all, 3: random first three
-    num_features = size(posterior_samples,2);
-    if Method == 1
-        UCBs = prctile(posterior_samples,90);
+    num_features = size(posterior.mean,1);
+    if Method == 1 %UCB method
+        % Assume that the features of Theta are independent
+        % use 0.9 percentile for now (not the original UCB method)        
+        UCBs = posterior.mean + 1.28155 * sqrt(diag(posterior.sigma));
         [~,selected_feature] = max(UCBs);
     end
-    if Method == 2 
+    if Method == 2 %randomly choose one feature
         selected_feature = ceil(rand*num_features);
     end
-    if Method == 3
-        selected_feature = ceil(rand*3);
+    if Method == 3 %randomly choose one of the nonzero features
+        selected_feature = ceil(rand*num_nonzero_features);
     end
-    if Method == 4
-        VARs = var(posterior_samples);
+    if Method == 4 %choose the feature with highest posterior variance
+        %Assume that features of Theta are independent
+        VARs = diag(posterior.sigma);
         [~,selected_feature]= max(VARs);
     end
-    
-  
-        
+             
 
 end
 
