@@ -2,11 +2,11 @@ function [ selected_feature ] = decision_policy( posterior , Method, num_nonzero
 %DECISION_POLICY chooses one of the features to show to the user
     %Method = 1: UCB, 2: random all, 3: random first three
     num_features = size(posterior.mean,1);
-    if Method == 1 %UCB method
+    if Method == 1 %Combination of UCB and LCB
         % Assume that the features of Theta are independent
-        % use 0.9 percentile for now (not the original UCB method)        
-        UCBs = posterior.mean + 1.28155 * sqrt(diag(posterior.sigma));
-        [~,selected_feature] = max(UCBs);
+        % use 0.9 percentile for now       
+        UBs = abs(posterior.mean) + 1.28155 * sqrt(diag(posterior.sigma));
+        [~,selected_feature] = max(UBs);
     end
     if Method == 2 %randomly choose one feature
         selected_feature = ceil(rand*num_features);
@@ -19,12 +19,6 @@ function [ selected_feature ] = decision_policy( posterior , Method, num_nonzero
         VARs = diag(posterior.sigma);
         [~,selected_feature]= max(VARs);
     end
-    if Method == 5 %Combination of UCB and LCB
-        % Assume that the features of Theta are independent
-        % use 0.9 percentile for now       
-        UBs = abs(posterior.mean) + 1.28155 * sqrt(diag(posterior.sigma));
-        [~,selected_feature] = max(UBs);
-    end    
              
 
 end

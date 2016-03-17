@@ -7,7 +7,7 @@ load('results')
 num_methods = size(decisions,1);
 num_iterations = size(decisions,2);
 num_runs = size(decisions,3);
-Method_list = char('90% UCB','Uniformly random','random on the relevelant features','max variance', 'Max(UCB,LCB)');
+Method_list = char('Max(90% UCB,90% LCB)','Uniformly random','random on the relevelant features','max variance');
 
 figure
 plot(mean(Loss_1,3)','.-');
