@@ -23,14 +23,30 @@ title('Loss function')
 xlabel('number of expert feedbacks')
 ylabel('Loss value (theta - theta*)')
 
-%% TODO: add percentage of explorative and exploitative decisions untill each step.
 
-% hold on
-for method =1 : num_methods
-    figure
-    plot(decisions(method,:,1)','.');
-    legend(Method_list(method,:));
-end
+%divide the decisions in two groups:  0. features with zero values 1. features with non-zero values
+binary_decisions = decisions <= num_nonzero_features;
+ave_binary_decisions = mean(binary_decisions,3);
+
+figure
+plot(ave_binary_decisions','.-');
+legend(Method_list)
+title('Average suggestion behavior of each method')
+xlabel('number of expert feedbacks')
+ylabel('0 means zero features, 1 means non-zero features')
+
+acccumulated_ave_binary_decisions = cumsum(ave_binary_decisions,2);
+acccumulated_ave_binary_decisions = acccumulated_ave_binary_decisions ./ repmat([1:num_iterations],num_methods,1);
+
+figure
+plot(acccumulated_ave_binary_decisions','.-');
+legend(Method_list)
+title('Accumulated average suggestion behavior of each method')
+xlabel('number of expert feedbacks')
+ylabel('0 means zero features, 1 means non-zero features')
+%do the same thing but for the accumulated decisions 
+
+
 % legend(Method_list)
 
 % for method =1 : num_methods

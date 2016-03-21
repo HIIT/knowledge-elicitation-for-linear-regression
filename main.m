@@ -20,6 +20,7 @@ num_data = 300; % total number of data (training and test) - this is not importa
 %Theta_star is the true value of the unknown weight vector 
 theta_star = 0.5*randn( num_nonzero_features, 1); % We are using randn to generate theta start
 theta_star = [theta_star; zeros(num_features-num_nonzero_features,1)]; % make it sparse
+normalization_method = 1; %normalization method for generating the data
 
 % %% data generation
 % X_all = generate_data(num_data,num_features, 1);
@@ -35,7 +36,7 @@ for method = 1:num_methods
     for run = 1:num_runs
         Theta_user = []; %user feedback which is a (N_user * 2) array containing [feedback value, feature_number].
         %generate new data for each run (because the results is sensitive to the covariate values)
-        X_all = generate_data(num_data,num_features, 1);
+        X_all = generate_data(num_data,num_features, normalization_method);
         X = [X_all(1:num_trainingdata,:)]'; % select a subset of data as training data
         Y = normrnd(X'*theta_star, model_parameters.Nu_y); % calculate drug responses of the training data
         for it = 1:num_iterations
@@ -53,5 +54,5 @@ for method = 1:num_methods
 end
 
 %% averaging and plotting
-save('results', 'Loss_1', 'Loss_2','decisions')
+save('results', 'Loss_1', 'Loss_2','decisions', 'num_nonzero_features')
 evaluate_results
