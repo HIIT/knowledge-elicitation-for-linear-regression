@@ -30,6 +30,7 @@ normalization_method = 1; %normalization method for generating the data
 %% Main algorithm
 Loss_1 = zeros(num_methods, num_iterations, num_runs);
 Loss_2 = zeros(num_methods, num_iterations, num_runs);
+Loss_3 = zeros(num_methods, num_iterations, num_runs);
 decisions = zeros(num_methods, num_iterations, num_runs); 
 for run = 1:num_runs 
     run
@@ -46,6 +47,12 @@ for run = 1:num_runs
             %% calculate different loss functions
             Loss_1(method, it, run) = sum((X_test*Posterior_mean- X_test*theta_star).^2);
             Loss_2(method, it, run) = sum((Posterior_mean-theta_star).^2);       
+            %log of posterior predictive dist as the loss funcyion           
+            for i=1: size(X_test,1)
+                post_pred_var = X_test(i,:)*posterior.sigma*X_test(i,:)' + model_parameters.Nu_y^2;
+                log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_test(i,:)*Posterior_mean - X_test(i,:)*theta_star)^2)/(2*post_pred_var);    
+                Loss_3(method, it, run) = Loss_3(method, it, run) + log_post_pred;
+            end
             %% make decisions based on a decision policy
             feature_index = decision_policy(posterior, method, num_nonzero_features, X_train, Y, Theta_user, model_parameters);
             decisions(method, it, run) = feature_index;
@@ -56,5 +63,5 @@ for run = 1:num_runs
 end
 
 %% averaging and plotting
-save('results', 'Loss_1', 'Loss_2','decisions', 'num_nonzero_features')
+save('results', 'Loss_1', 'Loss_2', 'Loss_3','decisions', 'num_nonzero_features')
 evaluate_results

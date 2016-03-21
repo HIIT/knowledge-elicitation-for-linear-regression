@@ -24,6 +24,13 @@ xlabel('number of expert feedbacks')
 ylabel('Loss value (theta - theta*)')
 
 
+figure
+plot(mean(Loss_3,3)','.-');
+legend(Method_list)
+title('Loss function')
+xlabel('number of expert feedbacks')
+ylabel('Loss value (log(posterior predictive))')
+
 %divide the decisions in two groups:  0. features with zero values 1. features with non-zero values
 binary_decisions = decisions <= num_nonzero_features;
 ave_binary_decisions = mean(binary_decisions,3);
