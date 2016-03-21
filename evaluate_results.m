@@ -14,7 +14,7 @@ plot(mean(Loss_1,3)','.-');
 legend(Method_list)
 title('Loss function')
 xlabel('number of expert feedbacks')
-ylabel('Loss value X(theta - theta*)')
+ylabel('Loss value (X_test*theta - Y_test)')
 
 figure
 plot(mean(Loss_2,3)','.-');
