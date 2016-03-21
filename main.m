@@ -31,21 +31,23 @@ normalization_method = 1; %normalization method for generating the data
 Loss_1 = zeros(num_methods, num_iterations, num_runs);
 Loss_2 = zeros(num_methods, num_iterations, num_runs);
 decisions = zeros(num_methods, num_iterations, num_runs); 
-for method = 1:num_methods
-    method
-    for run = 1:num_runs
+for run = 1:num_runs 
+    run
+    %generate new data for each run (because the results is sensitive to the covariate values)
+    X_all = generate_data(num_data,num_features, normalization_method);
+    X_train = [X_all(1:num_trainingdata,:)]'; % select a subset of data as training data
+    X_test = X_all(num_trainingdata+1:num_data,:); % the rest are the test data
+    Y = normrnd(X_train'*theta_star, model_parameters.Nu_y); % calculate drug responses of the training data
+    for method = 1:num_methods
         Theta_user = []; %user feedback which is a (N_user * 2) array containing [feedback value, feature_number].
-        %generate new data for each run (because the results is sensitive to the covariate values)
-        X_all = generate_data(num_data,num_features, normalization_method);
-        X = [X_all(1:num_trainingdata,:)]'; % select a subset of data as training data
-        Y = normrnd(X'*theta_star, model_parameters.Nu_y); % calculate drug responses of the training data
         for it = 1:num_iterations
-            posterior = calculate_posterior(X, Y, Theta_user, model_parameters);
+            posterior = calculate_posterior(X_train, Y, Theta_user, model_parameters);
             Posterior_mean = posterior.mean;
-            Loss_1(method, it, run) = sum((X_all*Posterior_mean- X_all*theta_star).^2);
+            %% calculate different loss functions
+            Loss_1(method, it, run) = sum((X_test*Posterior_mean- X_test*theta_star).^2);
             Loss_2(method, it, run) = sum((Posterior_mean-theta_star).^2);       
-            %make decisions based on a decision policy
-            feature_index = decision_policy(posterior, method, num_nonzero_features, X, Y, Theta_user, model_parameters);
+            %% make decisions based on a decision policy
+            feature_index = decision_policy(posterior, method, num_nonzero_features, X_train, Y, Theta_user, model_parameters);
             decisions(method, it, run) = feature_index;
             %simulate user feedback 
             Theta_user = [Theta_user; normrnd(theta_star(feature_index),model_parameters.Nu_user), feature_index];

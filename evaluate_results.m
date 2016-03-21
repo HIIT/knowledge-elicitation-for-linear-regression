@@ -44,7 +44,6 @@ legend(Method_list)
 title('Accumulated average suggestion behavior of each method')
 xlabel('number of expert feedbacks')
 ylabel('0 means zero features, 1 means non-zero features')
-%do the same thing but for the accumulated decisions 
 
 
 % legend(Method_list)
