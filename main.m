@@ -13,7 +13,7 @@ model_parameters = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
 
 %Algorithm parameters
 num_iterations = 100;
-num_methods = 4; %number of decision making methods that we want to consider
+num_methods = 5; %number of decision making methods that we want to consider
 num_runs = 50; 
 %% Simulator setup
 %assume a linear finction
@@ -51,7 +51,7 @@ for method = 1:num_methods
             Loss_1(method, it, run) = sum((X_all*Posterior_mean- X_all*theta_star).^2);
             Loss_2(method, it, run) = sum((Posterior_mean-theta_star).^2);       
             %make decisions based on a decision policy
-            feature_index = decision_policy(posterior, method, num_nonzero_features);
+            feature_index = decision_policy(posterior, method, num_nonzero_features, X, Y, Theta_user, model_parameters);
             decisions(method, it, run) = feature_index;
             %simulate user feedback 
             Theta_user = [Theta_user; normrnd(theta_star(feature_index),model_parameters.Nu_user), feature_index];
