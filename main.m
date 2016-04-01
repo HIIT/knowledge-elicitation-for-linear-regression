@@ -18,8 +18,6 @@ num_runs = 50;
 num_data = 300; % total number of data (training and test) - this is not important
 %% Simulator setup
 %Theta_star is the true value of the unknown weight vector 
-theta_star = 0.5*randn( num_nonzero_features, 1); % We are using randn to generate theta start
-theta_star = [theta_star; zeros(num_features-num_nonzero_features,1)]; % make it sparse
 normalization_method = 1; %normalization method for generating the data
 
 % %% data generation
@@ -31,9 +29,15 @@ normalization_method = 1; %normalization method for generating the data
 Loss_1 = zeros(num_methods, num_iterations, num_runs);
 Loss_2 = zeros(num_methods, num_iterations, num_runs);
 Loss_3 = zeros(num_methods, num_iterations, num_runs);
+Loss_4 = zeros(num_methods, num_iterations, num_runs);
+
 decisions = zeros(num_methods, num_iterations, num_runs); 
 for run = 1:num_runs 
     run
+
+    theta_star = 0.5*randn( num_nonzero_features, 1); % We are using randn to generate theta start
+    theta_star = [theta_star; zeros(num_features-num_nonzero_features,1)]; % make it sparse
+
     %generate new data for each run (because the results is sensitive to the covariate values)
     X_all   = generate_data(num_data,num_features, normalization_method);
     X_train = X_all(1:num_trainingdata,:)'; % select a subset of data as training data
@@ -55,6 +59,11 @@ for run = 1:num_runs
                 log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_test(:,i)'*Posterior_mean - Y_test(i))^2)/(2*post_pred_var);    
                 Loss_3(method, it, run) = Loss_3(method, it, run) + log_post_pred;
             end
+            for i=1: size(X_train,2)
+                post_pred_var = X_train(:,i)'*posterior.sigma*X_train(:,i) + model_parameters.Nu_y^2;
+                log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train(:,i)'*Posterior_mean - Y_train(i))^2)/(2*post_pred_var);
+                Loss_4(method, it, run) = Loss_4(method, it, run) + log_post_pred;
+            end
             %% make decisions based on a decision policy
             feature_index = decision_policy(posterior, method, num_nonzero_features, X_train, Y_train, Theta_user, model_parameters);
             decisions(method, it, run) = feature_index;
@@ -65,5 +74,5 @@ for run = 1:num_runs
 end
 
 %% averaging and plotting
-save('results', 'Loss_1', 'Loss_2', 'Loss_3','decisions', 'num_nonzero_features')
+save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'num_nonzero_features')
 evaluate_results
