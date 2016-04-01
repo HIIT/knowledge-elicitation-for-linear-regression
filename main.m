@@ -13,9 +13,9 @@ model_parameters = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
 
 %Algorithm parameters
 num_iterations = 100;
-num_methods = 5; %number of decision making methods that we want to consider
-num_runs = 50; 
-num_data = 300; % total number of data (training and test) - this is not important
+num_methods = 6; %number of decision making methods that we want to consider
+num_runs = 50;
+num_data = 1000 + num_trainingdata; % total number of data (training and test) - this is not important
 %% Simulator setup
 %Theta_star is the true value of the unknown weight vector 
 normalization_method = 1; %normalization method for generating the data
