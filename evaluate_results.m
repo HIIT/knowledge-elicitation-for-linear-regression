@@ -27,16 +27,16 @@ ylabel('Loss value (theta - theta*)')
 figure
 plot(mean(Loss_3,3)','.-');
 legend(Method_list)
-title('Loss function')
+title('Utility function')
 xlabel('number of expert feedbacks')
-ylabel('Loss value (log(posterior predictive))')
+ylabel('Utility value (log(posterior predictive))')
 
 figure
 plot(mean(Loss_4,3)','.-');
 legend(Method_list)
-title('Loss function')
+title('Utility function')
 xlabel('number of expert feedbacks')
-ylabel('Loss value (log(posterior predictive)) on tr.data')
+ylabel('Utility value (log(posterior predictive)) on tr.data')
 
 %divide the decisions in two groups:  0. features with zero values 1. features with non-zero values
 binary_decisions = decisions <= num_nonzero_features;
