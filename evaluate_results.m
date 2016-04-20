@@ -4,10 +4,9 @@ close all
 load('results')
 
 
-num_methods = size(decisions,1);
+num_methods = size(Method_list,2);
 num_iterations = size(decisions,2);
 num_runs = size(decisions,3);
-Method_list = char('Max(90% UCB,90% LCB)','Uniformly random','random on the relevelant features','max variance', 'Bayes experiment design', 'Bayes experiment design (tr.ref)');
 
 figure
 plot(mean(Loss_1,3)','.-');
