@@ -13,7 +13,7 @@ model_parameters = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
 
 %Algorithm parameters
 num_iterations = 100;
-num_runs = 5;
+num_runs = 50;
 num_data = 1000 + num_trainingdata; % total number of data (training and test) - this is not important
 
 %% METHOD LIST
@@ -21,7 +21,7 @@ num_data = 1000 + num_trainingdata; % total number of data (training and test) -
 % only the 'True' methods will be considered in the simulation
 METHODS_ALL = {
      'True', 'Max(90% UCB,90% LCB)'; 
-     'True', 'Uniformly random';
+     'Flase', 'Uniformly random';
      'False', 'random on the relevelant features';
      'True', 'max variance';
      'False', 'Bayes experiment design';
@@ -34,8 +34,7 @@ for m = 1:size(METHODS_ALL,1)
     end
 end
 num_methods = size(Method_list,2); %number of decision making methods that we want to consider
-%% Simulator setup
-%Theta_star is the true value of the unknown weight vector 
+%% Simulator setup 
 normalization_method = 1; %normalization method for generating the data
 
 %% Main algorithm
@@ -47,7 +46,7 @@ Loss_4 = zeros(num_methods, num_iterations, num_runs);
 decisions = zeros(num_methods, num_iterations, num_runs); 
 for run = 1:num_runs 
     run
-
+    %Theta_star is the true value of the unknown weight vector
     theta_star = 0.5*randn( num_nonzero_features, 1); % We are using randn to generate theta start
     theta_star = [theta_star; zeros(num_features-num_nonzero_features,1)]; % make it sparse
 
