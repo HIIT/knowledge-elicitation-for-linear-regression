@@ -1,20 +1,20 @@
 close all
 clear all
 
-%% Parameters
+%% Parameters and Simulator setup 
 %data parameters
 num_features = 1:50; %[start,step,max] This can be a set of values (e.g. 1:50) or just one value (e.g. 100)
-num_trainingdata = 3; %[start,step,max] This can be a set of values (e.g. 1:50:1000) or just one value (e.g. 5)
-num_data = 1000 + num_trainingdata; % total number of data (training and test) - this is not important
+num_trainingdata = 5; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
 max_num_nonzero_features = 5; % maximum number of features that are nonzero --- AKA sparsity measure
 % One way to measure to check the method is to fix the following ration: #num_traingdata/num_features
 
 %Algorithm parameters
-num_iterations = 20;
-num_runs = 25;
+num_iterations = 50; %total number of user feedback
+num_runs = 30;
 
 %model parameters
 model_parameters = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
+normalization_method = 1; %normalization method for generating the data (Xs)
 %% METHOD LIST
 % Set the desirable methods to 'True' and others to 'False'. only the 'True' methods will be considered in the simulation
 METHODS_ALL = {
@@ -32,9 +32,6 @@ for m = 1:size(METHODS_ALL,1)
     end
 end
 num_methods = size(Method_list,2); %number of decision making methods that we want to consider
-%% Simulator setup 
-normalization_method = 1; %normalization method for generating the data
-
 %% Main algorithm
 
 Loss_1 = zeros(num_methods, num_iterations, num_runs, size(num_features,2),size(num_trainingdata,2));
@@ -63,7 +60,7 @@ for n_f = 1:size(num_features,2);
             for method_num = 1:num_methods
                 method_name = Method_list(method_num);
                 Theta_user = []; %user feedback which is a (N_user * 2) array containing [feedback value, feature_number].
-                for it = 1:num_iterations
+                for it = 1:num_iterations %number of user feedback
                     posterior = calculate_posterior(X_train, Y_train, Theta_user, model_parameters);
                     Posterior_mean = posterior.mean;
                     %% calculate different loss functions

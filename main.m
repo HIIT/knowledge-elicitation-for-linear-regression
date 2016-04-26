@@ -1,30 +1,30 @@
 close all
 clear all
 
-%% Parameters
+%% Parameters and Simulator setup
 %data parameters
 num_features = 30; % total number of features
-num_nonzero_features = 5; % features that are nonzero --- AKA sparsity measure
 num_trainingdata = 10; % number of samples (patients with available drug response)
-% One could measure to check the method is to fix the following ration: #num_traingdata/num_features
-
-%model parameters
-model_parameters = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
+num_nonzero_features = 5; % features that are nonzero --- AKA sparsity measure
+% One way to measure to check the method is to fix the following ration: #num_traingdata/num_features
 
 %Algorithm parameters
 num_iterations = 100;
 num_runs = 50;
 num_data = 1000 + num_trainingdata; % total number of data (training and test) - this is not important
 
+%model parameters
+model_parameters = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
+normalization_method = 1; %normalization method for generating the data
 %% METHOD LIST
 % Set the desirable methods to 'True' and others to 'False'
 % only the 'True' methods will be considered in the simulation
 METHODS_ALL = {
      'True', 'Max(90% UCB,90% LCB)'; 
-     'Flase', 'Uniformly random';
+     'True', 'Uniformly random';
      'False', 'random on the relevelant features';
      'True', 'max variance';
-     'False', 'Bayes experiment design';
+     'True', 'Bayes experiment design';
      'False', 'Bayes experiment design (tr.ref)';
      };
 Method_list = [];
@@ -34,8 +34,6 @@ for m = 1:size(METHODS_ALL,1)
     end
 end
 num_methods = size(Method_list,2); %number of decision making methods that we want to consider
-%% Simulator setup 
-normalization_method = 1; %normalization method for generating the data
 
 %% Main algorithm
 Loss_1 = zeros(num_methods, num_iterations, num_runs);
