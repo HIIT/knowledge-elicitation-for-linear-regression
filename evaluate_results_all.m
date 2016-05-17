@@ -30,19 +30,24 @@ for loss_function = 1:4
         %% Assume that the #training_data is fixed and iterate through #dimensions
         t_index = 1;
         figure();
-        heat_map = zeros(num_iterations,size(num_features,2));
-        for method = 1:num_methods
-            for f_index = 1:size(num_features,2)
-                cutted_loss = loss(:,:,:,f_index,t_index);
-                temp = mean(cutted_loss,3); %average over different runs
-                heat_map(:,f_index) = temp(method,:)'; %create a heatmap for each method
+        heat_map = zeros(num_iterations,size(num_features,2),num_methods);       
+        for f_index = 1:size(num_features,2)
+            cutted_loss = loss(:,:,:,f_index,t_index);
+            temp = mean(cutted_loss,3); %average over different runs
+            for method = 1:num_methods
+                heat_map(:,f_index,method) = temp(method,:)'; %create a heatmap for each method
             end
+        end
+        min_val = min(heat_map(:));
+        max_val = max(heat_map(:));
+        for method = 1:num_methods
             subplot(2,2,method) 
-            pcolor(heat_map)
+            imagesc(heat_map(:,:,method), [min_val,max_val]);
+            axis xy
             title(Method_list(method))
             xlabel('number of dimensions')
             ylabel('number of expert feedbacks')
-        %     imagesc(heat_map);
+        %     pcolor(heat_map(:,:,method))
         %     colormap(gray)     
         %     colorbar();
         end
@@ -53,19 +58,24 @@ for loss_function = 1:4
         %% Assume that the #dimensions is fixed and iterate through #training_data 
         f_index = 1;
         figure();
-        heat_map = zeros(num_iterations,size(num_trainingdata,2));
-        for method = 1:num_methods
-            for t_index = 1:size(num_trainingdata,2)
-                cutted_loss = loss(:,:,:,f_index,t_index); 
-                temp = mean(cutted_loss,3); %average over different runs
-                heat_map(:,t_index) = temp(method,:)'; %create a heatmap for each method
+        heat_map = zeros(num_iterations,size(num_trainingdata,2),num_methods);
+        for t_index = 1:size(num_trainingdata,2)
+            cutted_loss = loss(:,:,:,f_index,t_index);
+            temp = mean(cutted_loss,3); %average over different runs
+            for method = 1:num_methods
+                heat_map(:,t_index,method) = temp(method,:)'; %create a heatmap for each method
             end
+        end
+        min_val = min(heat_map(:));
+        max_val = max(heat_map(:));
+        for method = 1:num_methods
             subplot(2,2,method) 
-            pcolor(heat_map)
+            imagesc(heat_map(:,:,method), [min_val,max_val]);
+            axis xy
             title(Method_list(method))
             xlabel('number of training data')
-            ylabel('number of expert feedbacks')          
-        %     imagesc(heat_map);
+            ylabel('number of expert feedbacks')    
+        %     pcolor(heat_map(:,:,method))            
         %     colormap(gray)     
         %     colorbar();
         end
