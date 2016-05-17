@@ -9,7 +9,7 @@ num_nonzero_features = 5; % features that are nonzero --- AKA sparsity measure
 % One way to measure to check the method is to fix the following ration: #num_traingdata/num_features
 
 %Algorithm parameters
-num_iterations = 100;
+num_iterations = 50;
 num_runs = 50;
 num_data = 1000 + num_trainingdata; % total number of data (training and test) - this is not important
 
@@ -25,6 +25,7 @@ METHODS_ALL = {
      'False', 'random on the relevelant features';
      'True', 'max variance';
      'True', 'Bayes experiment design';
+     'True', 'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
      };
 Method_list = [];
