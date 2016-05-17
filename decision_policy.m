@@ -39,6 +39,7 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
         [~,selected_feature]= max(Utility);          
     end
 
+    %TODO: double check this function (it was implemented by Tomi)
     if strcmp(Method_name,'Bayes experiment design (tr.ref)') %Bayesian experimental design (training data reference) %TODO: At the moment this method only selects only one feature (ask Tomi)
         Utility = zeros(num_features,1);
         num_data = size(X,2);
@@ -67,6 +68,27 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
             end
         end
         [~,selected_feature]= max(Utility);
+    end
+    
+    %TODO: double check the mathematical derivation from Seeger paper.
+    if strcmp(Method_name,'Expected information gain')  
+        %information gain is the KL-divergence of the posterior after and
+        %before the user feedback. the expectation is taken over the
+        %posterior predictive of user feedback. The derivations are based
+        %on the paper "Bayesian Inference and Optimal Design for the Sparse
+        %Linear Model". Unfortunately, the decision policy again only
+        %depends on the covariance of the posterior! (and not the mean)
+        
+        Utility = zeros(num_features,1);
+        for j=1: num_features
+            %create the feature vector of user feedback
+            s = zeros(num_features, 1 ); 
+            s(j) = 1;
+            alpha = 1 + model_parameters.Nu_user^(-2) * s'*posterior.sigma*s;
+            Utility(j) = log(alpha) + (1/alpha -1) + (alpha-1)/(alpha^2 * model_parameters.Nu_user^4) * (s'*posterior.sigma*s + model_parameters.Nu_user^2 );
+        end
+        [~,selected_feature]= max(Utility);          
+    
     end
     
 end

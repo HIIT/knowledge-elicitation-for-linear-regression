@@ -10,6 +10,7 @@ max_num_nonzero_features = 5; % maximum number of features that are nonzero --- 
 
 %Algorithm parameters
 num_iterations = 50; %total number of user feedback
+num_runs = 20;
 
 %model parameters
 model_parameters = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
