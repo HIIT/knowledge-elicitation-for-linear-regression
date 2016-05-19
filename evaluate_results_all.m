@@ -74,6 +74,8 @@ for loss_function = 1:4
             axis xy
             title(Method_list(method))
             xlabel('number of training data')
+            set(gca, 'XTick', 1:length(num_trainingdata)/5:length(num_trainingdata)); % Change x-axis ticks
+            set(gca, 'XTickLabel', num_trainingdata(1:length(num_trainingdata)/5:length(num_trainingdata))); % Change x-axis ticks labels.            
             ylabel('number of expert feedbacks')    
         %     pcolor(heat_map(:,:,method))            
         %     colormap(gray)     
