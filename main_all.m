@@ -3,14 +3,14 @@ clear all
 
 %% Parameters and Simulator setup 
 %data parameters
-num_features = 1:100; %[start,step,max] This can be a set of values (e.g. 1:100) or just one value (e.g. 100)
-num_trainingdata = 5; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
-max_num_nonzero_features = 5; % maximum number of features that are nonzero --- AKA sparsity measure
+num_features = 100; %[start,step,max] This can be a set of values (e.g. 1:100) or just one value (e.g. 100)
+num_trainingdata = 1:10:500; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
+max_num_nonzero_features = 10; % maximum number of features that are nonzero --- AKA sparsity measure
 % One way to measure to check the method is to fix the following ration: #num_traingdata/num_features
 
 %Algorithm parameters
 num_iterations = 50; %total number of user feedback
-num_runs = 20;
+num_runs = 50;
 
 %model parameters
 model_parameters = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
