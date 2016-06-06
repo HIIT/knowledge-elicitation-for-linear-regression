@@ -1,8 +1,14 @@
 close all
 clear all
+%%TODO: 
+% Real data (GDSC) is very strange. The code is not good for it yet.
+
 
 %% Parameters and Simulator setup
-%data parameters
+DATA_SOURCE = 'SIMULATION_DATA'; %use simulated data
+% DATA_SOURCE = 'GDSC_DATA'; %Genomics of Drug Sensitivity in Cancer (GDSC) data
+
+%data parameters for SIMULATION_DATA
 num_features = 30; % total number of features
 num_trainingdata = 10; % number of samples (patients with available drug response)
 num_nonzero_features = 5; % features that are nonzero --- AKA sparsity measure
@@ -10,7 +16,7 @@ num_nonzero_features = 5; % features that are nonzero --- AKA sparsity measure
 
 %Algorithm parameters
 num_iterations = 50;
-num_runs = 50;
+num_runs = 5;
 num_data = 1000 + num_trainingdata; % total number of data (training and test) - this is not important
 
 %model parameters
@@ -45,17 +51,29 @@ Loss_4 = zeros(num_methods, num_iterations, num_runs);
 decisions = zeros(num_methods, num_iterations, num_runs); 
 for run = 1:num_runs 
     run
-    %Theta_star is the true value of the unknown weight vector
-    theta_star = 0.5*randn( num_nonzero_features, 1); % We are using randn to generate theta start
-    theta_star = [theta_star; zeros(num_features-num_nonzero_features,1)]; % make it sparse
+    %select the appropriate dataset (simulation or real data)
+    if strcmp(DATA_SOURCE,'SIMULATION_DATA') %% Use Synthetic Data
+        %Theta_star is the true value of the unknown weight vector
+        theta_star = 0.5*randn( num_nonzero_features, 1); % We are using randn to generate theta start
+        theta_star = [theta_star; zeros(num_features-num_nonzero_features,1)]; % make it sparse
 
-    %generate new data for each run (because the results is sensitive to the covariate values)
-    X_all   = generate_data(num_data,num_features, normalization_method);
-    X_train = X_all(1:num_trainingdata,:)'; % select a subset of data as training data
-    X_test  = X_all(num_trainingdata+1:num_data,:)'; % the rest are the test data
-    Y_train = normrnd(X_train'*theta_star, model_parameters.Nu_y); % calculate drug responses of the training data
-    %Tomi suggested that it makes more sense to use Y_test instead of X_test'*theta_star in the loss functions
-    Y_test  = normrnd(X_test'*theta_star, model_parameters.Nu_y); % calculate drug responses of the test data
+        %generate new data for each run (because the results is sensitive to the covariate values)
+        X_all   = generate_data(num_data,num_features, normalization_method);
+        X_train = X_all(1:num_trainingdata,:)'; % select a subset of data as training data
+        X_test  = X_all(num_trainingdata+1:num_data,:)'; % the rest are the test data
+        Y_train = normrnd(X_train'*theta_star, model_parameters.Nu_y); % calculate drug responses of the training data
+        %Tomi suggested that it makes more sense to use Y_test instead of X_test'*theta_star in the loss functions
+        Y_test  = normrnd(X_test'*theta_star, model_parameters.Nu_y); % calculate drug responses of the test data
+    end
+    if strcmp(DATA_SOURCE,'GDSC_DATA') %% Use GDSC data set
+        %% TODO: THIS IS NOT WORKING! CHECK TEMP SCRIPT
+        drug_number = 1;
+        [X_all, Y_all, theta_star] = load_GDSC_data(drug_number);
+        Y_based_on_ground_truth = X_all*theta_star;
+        prediction_MSE_ground_truth = sum((Y_all-Y_based_on_ground_truth).^2);
+        %TODO: the error is too high for the true theta!! I have to check it with Ammad
+        %TODO: I have to divide the test and the training data since the sample size should be quite small
+    end
     for method_num = 1:num_methods
         method_name = Method_list(method_num);
         Theta_user = []; %user feedback which is a (N_user * 2) array containing [feedback value, feature_number].
