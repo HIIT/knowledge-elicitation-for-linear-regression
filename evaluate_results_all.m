@@ -66,6 +66,11 @@ for loss_function = 1:4
                 heat_map(:,t_index,method) = temp(method,:)'; %create a heatmap for each method
             end
         end
+        temp_num_trainingdata = num_trainingdata;
+%         %(optional) remove some parts of the figure -  next three lines
+%         remove_first_k_iteration=2;
+%         heat_map(:,1:remove_first_k_iteration,:) = []; 
+%         temp_num_trainingdata = num_trainingdata(remove_first_k_iteration+1:size(num_trainingdata,2));
         min_val = min(heat_map(:));
         max_val = max(heat_map(:));
         for method = 1:num_methods
@@ -74,8 +79,8 @@ for loss_function = 1:4
             axis xy
             title(Method_list(method))
             xlabel('number of training data')
-            set(gca, 'XTick', 1:length(num_trainingdata)/5:length(num_trainingdata)); % Change x-axis ticks
-            set(gca, 'XTickLabel', num_trainingdata(1:length(num_trainingdata)/5:length(num_trainingdata))); % Change x-axis ticks labels.            
+            set(gca, 'XTick', 1:length(temp_num_trainingdata)/5:length(temp_num_trainingdata)); % Change x-axis ticks
+            set(gca, 'XTickLabel', temp_num_trainingdata(1:length(temp_num_trainingdata)/5:length(temp_num_trainingdata))); % Change x-axis ticks labels.        
             ylabel('number of expert feedbacks')    
         %     pcolor(heat_map(:,:,method))            
         %     colormap(gray)     
