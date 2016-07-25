@@ -54,6 +54,7 @@ for run = 1:num_runs
     %select the appropriate dataset (simulation or real data)
     if strcmp(DATA_SOURCE,'SIMULATION_DATA') %% Use Synthetic Data
         %Theta_star is the true value of the unknown weight vector
+        % TODO: theta_star should be generated based on the model parameters
         theta_star = 0.5*randn( num_nonzero_features, 1); % We are using randn to generate theta start
         theta_star = [theta_star; zeros(num_features-num_nonzero_features,1)]; % make it sparse
 

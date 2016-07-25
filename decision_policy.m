@@ -1,4 +1,4 @@
-function [ selected_feature ] = decision_policy( posterior , Method_name, num_nonzero_features, X, Y, Theta_user, model_parameters )
+function [ selected_feature ] = decision_policy( posterior , Method_name, num_nonzero_features, X, Y, Theta_user, model_params, mode, sparse_params, sparse_options)
 %DECISION_POLICY chooses one of the features to show to the user. 
 
     num_features = size(posterior.mean,1);
@@ -31,9 +31,9 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
             %Calculate the posterior variance assuming feature j has been selected
             %add a dummy fedback value of 1 to jth feature
             new_theta_user = [Theta_user; 1 , j];
-            new_posterior = calculate_posterior(X, Y, new_theta_user, model_parameters);
+            new_posterior = calculate_posterior(X, Y, new_theta_user, model_params, mode, sparse_params, sparse_options);
             for i=1:num_data
-                Utility(j) = Utility(j) -0.5*( 1+ log(2*pi*( X(:,i)'*new_posterior.sigma*X(:,i) + model_parameters.Nu_y^2   ) ) );
+                Utility(j) = Utility(j) -0.5*( 1+ log(2*pi*( X(:,i)'*new_posterior.sigma*X(:,i) + model_params.Nu_y^2   ) ) );
             end        
         end
         [~,selected_feature]= max(Utility);          
@@ -49,18 +49,18 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
             %this has no effect on the variance)
             % (a bit lazily coded, but hopefully correct)
             new_theta_user = [Theta_user; posterior.mean(j), j];
-            new_posterior = calculate_posterior(X, Y, new_theta_user, model_parameters);
+            new_posterior = calculate_posterior(X, Y, new_theta_user, model_params, mode, sparse_params, sparse_options);
             old_mu = posterior.sigma \ posterior.mean;
             new_f = 0 * old_mu;
-            new_f(j) = posterior.mean(j) / model_parameters.Nu_user^2;
+            new_f(j) = posterior.mean(j) / model_params.Nu_user^2;
             new_f_v = 0 * posterior.sigma;
-            new_f_v(j, j) = posterior.sigma(j, j) + model_parameters.Nu_user^2 + posterior.mean(j)^2;
-            new_f_v(j, j) = new_f_v(j, j) / model_parameters.Nu_user^4;
+            new_f_v(j, j) = posterior.sigma(j, j) + model_params.Nu_user^2 + posterior.mean(j)^2;
+            new_f_v(j, j) = new_f_v(j, j) / model_params.Nu_user^4;
             mmt = new_posterior.sigma * (old_mu * old_mu' ...
                      + old_mu * new_f' + new_f * old_mu' ...
                      + new_f_v) * new_posterior.sigma;
             for i=1:num_data
-                new_var = X(:,i)' * new_posterior.sigma * X(:,i) + model_parameters.Nu_y^2;
+                new_var = X(:,i)' * new_posterior.sigma * X(:,i) + model_params.Nu_y^2;
                 Utility(j) = Utility(j) - 0.5 * log(2 * pi) ...
                              - 0.5 * log(new_var) ...
                              - 0.5 * (Y(i)^2 - 2 * Y(i) * X(:, i)' * new_posterior.mean ...
@@ -84,8 +84,8 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
             %create the feature vector of user feedback
             s = zeros(num_features, 1 ); 
             s(j) = 1;
-            alpha = 1 + model_parameters.Nu_user^(-2) * s'*posterior.sigma*s;
-            Utility(j) = log(alpha) + (1/alpha -1) + (alpha-1)/(alpha^2 * model_parameters.Nu_user^4) * (s'*posterior.sigma*s + model_parameters.Nu_user^2 );
+            alpha = 1 + model_params.Nu_user^(-2) * s'*posterior.sigma*s;
+            Utility(j) = log(alpha) + (1/alpha -1) + (alpha-1)/(alpha^2 * model_params.Nu_user^4) * (s'*posterior.sigma*s + model_params.Nu_user^2 );
         end
         [~,selected_feature]= max(Utility);          
     
