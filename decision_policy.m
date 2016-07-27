@@ -1,32 +1,43 @@
 function [ selected_feature ] = decision_policy( posterior , Method_name, num_nonzero_features, X, Y, Theta_user, model_params, mode, sparse_params, sparse_options)
 %DECISION_POLICY chooses one of the features to show to the user. 
-
+% TODO: if we consider only Gaussian posterior then the inputs can be trimmed a little bit
     num_features = size(posterior.mean,1);
+    num_data = size(X,2);
     
-    if strcmp(Method_name,'Max(90% UCB,90% LCB)') %Combination of UCB and LCB
+    %Combination of UCB and LCB
+    if strcmp(Method_name,'Max(90% UCB,90% LCB)') 
         % Assume that the features of Theta are independent
         % use 0.9 percentile for now       
         UBs = abs(posterior.mean) + 1.28155 * sqrt(diag(posterior.sigma));
         [~,selected_feature] = max(UBs);
     end
     
-    if strcmp(Method_name,'Uniformly random') %randomly choose one feature
+    
+    %randomly choose one feature
+    if strcmp(Method_name,'Uniformly random') 
         selected_feature = ceil(rand*num_features);
     end
     
-    if strcmp(Method_name,'random on the relevelant features') %randomly choose one of the nonzero features
+    
+    %randomly choose one of the nonzero features
+    if strcmp(Method_name,'random on the relevelant features') 
         selected_feature = ceil(rand*num_nonzero_features);
     end
     
-    if strcmp(Method_name,'max variance')%choose the feature with highest posterior variance
+    
+    %choose the feature with highest posterior variance
+    if strcmp(Method_name,'max variance')
         %Assume that features of Theta are independent
         VARs = diag(posterior.sigma);
         [~,selected_feature]= max(VARs);
     end
-             
-    if strcmp(Method_name,'Bayes experiment design') %Bayesian experimental design (with prediction as the goal and expected gain in Shannon information as the utility)         
+    
+    
+    %TODO: We do not need to call the calculate posterior function here
+    %again. Just use the iterative formula in Expected information gain (post_pred) implementation 
+    %Bayesian experimental design (with prediction as the goal and expected gain in Shannon information as the utility) 
+    if strcmp(Method_name,'Bayes experiment design') 
         Utility = zeros(num_features,1);
-        num_data = size(X,2);
         for j=1: num_features
             %Calculate the posterior variance assuming feature j has been selected
             %add a dummy fedback value of 1 to jth feature
@@ -39,10 +50,12 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
         [~,selected_feature]= max(Utility);          
     end
 
+    
     %TODO: double check this function (it was implemented by Tomi)
-    if strcmp(Method_name,'Bayes experiment design (tr.ref)') %Bayesian experimental design (training data reference) %TODO: At the moment this method only selects only one feature (ask Tomi)
+    %TODO: At the moment this method only selects only one feature (ask Tomi)
+    %Bayesian experimental design (training data reference) 
+    if strcmp(Method_name,'Bayes experiment design (tr.ref)') 
         Utility = zeros(num_features,1);
-        num_data = size(X,2);
         for j=1:num_features
             %Calculate the posterior variance assuming feature j has been selected
             %add the posterior mean feedback value to jth feature (note:
@@ -70,14 +83,14 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
         [~,selected_feature]= max(Utility);
     end
     
+    
     %TODO: double check the mathematical derivation from Seeger paper.
     if strcmp(Method_name,'Expected information gain')  
         %information gain is the KL-divergence of the posterior after and
         %before the user feedback. the expectation is taken over the
         %posterior predictive of user feedback. The derivations are based
         %on the paper "Bayesian Inference and Optimal Design for the Sparse
-        %Linear Model". Unfortunately, the decision policy again only
-        %depends on the covariance of the posterior! (and not the mean)
+        %Linear Model". 
         
         Utility = zeros(num_features,1);
         for j=1: num_features
@@ -85,10 +98,48 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
             s = zeros(num_features, 1 ); 
             s(j) = 1;
             alpha = 1 + model_params.Nu_user^(-2) * s'*posterior.sigma*s;
-            Utility(j) = log(alpha) + (1/alpha -1) + (alpha-1)/(alpha^2 * model_params.Nu_user^4) * (s'*posterior.sigma*s + model_params.Nu_user^2 );
+            Utility(j) = log(alpha) + (1/alpha -1) + ...
+                (alpha-1)/(alpha^2 * model_params.Nu_user^4) * (s'*posterior.sigma*s + model_params.Nu_user^2 );
         end
-        [~,selected_feature]= max(Utility);          
+        [~,selected_feature]= max(Utility);              
+    end
     
+    
+    if strcmp(Method_name,'Expected information gain (post_pred)') 
+        %information gain is the KL-divergence of the posterior_predictive 
+        %of the data after and before the user feedback. 
+        %the expectation is taken over the posterior predictive of user feedback. 
+        %The derivations are based on the notes for Couplong bandits. 
+
+        Utility = zeros(num_features,1);
+        
+        for j=1: num_features            
+            %create the feature vector of user feedback
+            s = zeros(num_features, 1 ); 
+            s(j) = 1;
+            %calculate alpha [notes]
+            alpha = 1 + model_params.Nu_user^(-2) * s'*posterior.sigma*s;
+            %calculate the new covarianse matrix considering s
+            sigma_new = posterior.sigma - model_params.Nu_user^(-2) * 1/alpha * posterior.sigma * (s * s') * posterior.sigma;
+
+            for i=1:num_data     
+                %some temp variable that make the calculations cleaner  
+                xTsigmax = X(:,i)'*posterior.sigma*X(:,i);
+                xTsigma_newx = X(:,i)'*sigma_new*X(:,i);
+                xTsigmas = X(:,i)'*posterior.sigma*s;
+                sTsigmas = s'*posterior.sigma*s;
+                %expected information gain formula:
+                part1 = 0.5 * log( (xTsigmax + model_params.Nu_y^2)/(xTsigma_newx + model_params.Nu_y^2) );                
+                part2_numerator = xTsigma_newx + model_params.Nu_y^2 + ...
+                    (model_params.Nu_y^(-2)*1/alpha*xTsigmas)^2 * (sTsigmas + model_params.Nu_y^2);
+                part2_denumerator = 2*(xTsigma_newx + model_params.Nu_y^2);
+                              
+                Utility(j) = Utility(j) + (part1 + part2_numerator/part2_denumerator - 0.5);
+            end              
+                     
+        end
+        [~,selected_feature]= max(Utility);            
+        
     end
     
 end

@@ -15,9 +15,9 @@ num_runs       = 50;
 
 %model parameters
 model_params   = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
-sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2);
-sparse_options = struct('damp',0.5, 'damp_decay',1, 'robust_updates',2, 'verbosity',1, 'max_iter',100, 'threshold',1e-5, 'min_site_prec',1e-6);
 normalization_method = 1; %normalization method for generating the data (Xs)
+sparse_options = struct('damp',0.5, 'damp_decay',1, 'robust_updates',2, 'verbosity',1, 'max_iter',100, 'threshold',1e-5, 'min_site_prec',1e-6);
+sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2);
 %% METHOD LIST
 % Set the desirable methods to 'True' and others to 'False'. only the 'True' methods will be considered in the simulation
 METHODS_ALL = {
@@ -25,9 +25,10 @@ METHODS_ALL = {
      'True',  'Uniformly random';
      'False', 'random on the relevelant features';
      'False', 'max variance';
-     'True',  'Bayes experiment design';
+     'False', 'Bayes experiment design';
      'True',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
+     'True',  'Expected information gain (post_pred)'
      };
 Method_list = [];
 for m = 1:size(METHODS_ALL,1)
