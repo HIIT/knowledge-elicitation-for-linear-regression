@@ -53,8 +53,8 @@ for n_f = 1:size(num_features,2);
         for run = 1:num_runs
             num_nonzero_features = min( num_features(n_f), max_num_nonzero_features);
             %Theta_star is the true value of the unknown weight vector
-            % TODO: theta_star should be generated based on the model parameters
-            theta_star = 0.5*randn( num_nonzero_features, 1); % We are using randn to generate theta start
+            % non-zero elements of theta_star are generated based on the model parameters
+            theta_star = model_params.Nu_theta*randn( num_nonzero_features, 1); % We are using randn to generate theta start
             theta_star = [theta_star; zeros(num_features(n_f)-num_nonzero_features,1)]; % make it sparse
 
             %generate new data for each run (because the results is sensitive to the covariate values)
