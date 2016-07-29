@@ -16,7 +16,7 @@ num_runs       = 50;
 %model parameters
 model_params   = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1);
 normalization_method = 1; %normalization method for generating the data (Xs)
-sparse_options = struct('damp',0.5, 'damp_decay',1, 'robust_updates',2, 'verbosity',1, 'max_iter',100, 'threshold',1e-5, 'min_site_prec',1e-6);
+sparse_options = struct('damp',0.5, 'damp_decay',1, 'robust_updates',2, 'verbosity',0, 'max_iter',100, 'threshold',1e-5, 'min_site_prec',1e-6);
 sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2);
 %% METHOD LIST
 % Set the desirable methods to 'True' and others to 'False'. only the 'True' methods will be considered in the simulation
@@ -67,8 +67,10 @@ for n_f = 1:size(num_features,2);
             for method_num = 1:num_methods
                 method_name = Method_list(method_num);
                 Theta_user = []; %user feedback which is a (N_user * 2) array containing [feedback value, feature_number].
+                sparse_options.si = []; % carry prior site terms between interactions
                 for it = 1:num_iterations %number of user feedback
                     posterior = calculate_posterior(X_train, Y_train, Theta_user, model_params, mode, sparse_params, sparse_options);
+                    sparse_options.si = posterior.si;
                     Posterior_mean = posterior.mean;
                     %% calculate different loss functions
                     Loss_1(method_num, it, run, n_f ,n_t) = sum((X_test'*Posterior_mean- Y_test).^2);

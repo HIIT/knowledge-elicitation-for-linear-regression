@@ -1,4 +1,4 @@
-function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, feedbacks)
+function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, feedbacks, si)
 % -- Likelihood:
 %    p(y_i|x_i,w,sigma2) = N(y_i|w'x_i, sigma2)
 %    p(f_j|w_j,eta2) = N(f_j|w_j, eta2)
@@ -33,11 +33,13 @@ pr.n = n;
 pr.m = m;
 n_feedbacks = size(feedbacks, 1);
 
-%% initialize
-si.prior.w.mu = zeros(m, 1);
-si.prior.w.tau = (1 / pr.tau2) * ones(m, 1);
-si.prior.gamma.a = ones(m, 1);
-si.prior.gamma.b = ones(m, 1);
+%% initialize (if si is given, prior sites are initialized, but likelihood is)
+if nargin < 6 || isempty(si)
+    si.prior.w.mu = zeros(m, 1);
+    si.prior.w.tau = (1 / pr.tau2) * ones(m, 1);
+    si.prior.gamma.a = ones(m, 1);
+    si.prior.gamma.b = ones(m, 1);
+end
 S_f = zeros(m, m);
 F_f = zeros(m, 1);
 if n_feedbacks > 0
@@ -74,11 +76,18 @@ for iter = 1:op.max_iter
     %% show progress and check for convergence
     [converged, conv] = report_progress_and_check_convergence(conv, iter, z, fa, op);
     if converged
+        if op.verbosity > 0
+            fprintf(1, 'EP converged on iteration %d\n', iter);
+        end
         break
     end
     
     %% update damp
     op.damp = op.damp * op.damp_decay;
+end
+
+if op.verbosity > 0 && converged == 0
+    fprintf(1, 'EP hit maximum number of iterations\n');
 end
 
 end
@@ -173,10 +182,9 @@ function [converged, conv] = report_progress_and_check_convergence(conv, iter, z
 conv_z = mean(abs(z(:) - conv.z_old(:)));
 conv_P_gamma = mean(abs(fa.P_gamma(:) - conv.P_gamma_old(:)));
 
-% % PED: I commented the next few lines for now
-% if op.verbosity > 0 && mod(iter, op.verbosity) == 0
-%     fprintf(1, '%d, conv = [%.2e %.2e], damp = %.2e\n', iter, conv_z, conv_P_gamma, op.damp);
-% end
+if op.verbosity > 0 && mod(iter, op.verbosity) == 0
+    fprintf(1, '%d, conv = [%.2e %.2e], damp = %.2e\n', iter, conv_z, conv_P_gamma, op.damp);
+end
 
 %converged = conv_z < op.threshold && conv_P_gamma < op.threshold;
 converged = conv_P_gamma < op.threshold;
