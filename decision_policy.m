@@ -111,32 +111,28 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
         %the expectation is taken over the posterior predictive of user feedback. 
         %The derivations are based on the notes for Couplong bandits. 
 
-        Utility = zeros(num_features,1);
-        
-        for j=1: num_features            
+        Utility = zeros(num_features,1);        
+        for j=1: num_features           
             %create the feature vector of user feedback
-            s = zeros(num_features, 1 ); 
+            s = zeros(num_features, 1 );
             s(j) = 1;
             %calculate alpha [notes]
             alpha = 1 + model_params.Nu_user^(-2) * s'*posterior.sigma*s;
             %calculate the new covarianse matrix considering s
-            sigma_new = posterior.sigma - model_params.Nu_user^(-2) * 1/alpha * posterior.sigma * (s * s') * posterior.sigma;
-
-            for i=1:num_data     
-                %some temp variable that make the calculations cleaner  
-                xTsigmax = X(:,i)'*posterior.sigma*X(:,i);
-                xTsigma_newx = X(:,i)'*sigma_new*X(:,i);
-                xTsigmas = X(:,i)'*posterior.sigma*s;
-                sTsigmas = s'*posterior.sigma*s;
-                %expected information gain formula:
-                part1 = 0.5 * log( (xTsigmax + model_params.Nu_y^2)/(xTsigma_newx + model_params.Nu_y^2) );                
-                part2_numerator = xTsigma_newx + model_params.Nu_y^2 + ...
-                    (model_params.Nu_y^(-2)*1/alpha*xTsigmas)^2 * (sTsigmas + model_params.Nu_y^2);
-                part2_denumerator = 2*(xTsigma_newx + model_params.Nu_y^2);
-                              
-                Utility(j) = Utility(j) + (part1 + part2_numerator/part2_denumerator - 0.5);
-            end              
-                     
+            sigma_new = posterior.sigma - model_params.Nu_user^(-2) * 1/alpha * (posterior.sigma * s) * (s' * posterior.sigma);            
+            %some temp variable that make the calculations cleaner
+            sTsigmas = s'*posterior.sigma*s;
+            xTsigmax = diag(X'*posterior.sigma*X);
+            xTsigma_newx = diag(X'*sigma_new*X);
+            xTsigmas = X'*(posterior.sigma*s);
+           
+            %expected information gain formula: 
+            part1 = 0.5 * log( (xTsigmax + model_params.Nu_y^2)./(xTsigma_newx + model_params.Nu_y^2) );              
+            part2_numerator = xTsigma_newx + model_params.Nu_y^2 + ...
+                (model_params.Nu_y^(-2)*1/alpha*xTsigmas).^2 * (sTsigmas + model_params.Nu_y^2);
+            part2_denumerator = 2*(xTsigma_newx + model_params.Nu_y^2);
+                            
+            Utility(j) = sum(part1 + part2_numerator./part2_denumerator - 0.5);                          
         end
         [~,selected_feature]= max(Utility);            
         

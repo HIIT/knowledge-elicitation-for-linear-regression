@@ -5,7 +5,7 @@ clear all
 mode                     = 1; % 0: Gaussian prior, 1: spike and slab prior
 %data parameters
 num_features             = 100; %[start,step,max] This can be a set of values (e.g. 1:100) or just one value (e.g. 100)
-num_trainingdata         = 1:10:500; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
+num_trainingdata         = 5:10:500; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
 max_num_nonzero_features = 10; % maximum number of features that are nonzero --- AKA sparsity measure
 
 
@@ -49,7 +49,7 @@ for n_f = 1:size(num_features,2);
     sparse_params.rho = max_num_nonzero_features/num_features(n_f);
     for n_t = 1:size(num_trainingdata,2);
         n_t
-        num_data = 1000 + num_trainingdata(n_t); % total number of data (training and test)
+        num_data = 500 + num_trainingdata(n_t); % total number of data (training and test)
         for run = 1:num_runs
             num_nonzero_features = min( num_features(n_f), max_num_nonzero_features);
             %Theta_star is the true value of the unknown weight vector
@@ -75,17 +75,15 @@ for n_f = 1:size(num_features,2);
                     %% calculate different loss functions
                     Loss_1(method_num, it, run, n_f ,n_t) = sum((X_test'*Posterior_mean- Y_test).^2);
                     Loss_2(method_num, it, run, n_f ,n_t) = sum((Posterior_mean-theta_star).^2);
-                    %log of posterior predictive dist as the loss function
-                    for i=1: size(X_test,2)
-                        post_pred_var = X_test(:,i)'*posterior.sigma*X_test(:,i) + model_params.Nu_y^2;
-                        log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_test(:,i)'*Posterior_mean - Y_test(i))^2)/(2*post_pred_var);
-                        Loss_3(method_num, it, run, n_f ,n_t) = Loss_3(method_num, it, run, n_f ,n_t) + log_post_pred;
-                    end
-                    for i=1: size(X_train,2)
-                        post_pred_var = X_train(:,i)'*posterior.sigma*X_train(:,i) + model_params.Nu_y^2;
-                        log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train(:,i)'*Posterior_mean - Y_train(i))^2)/(2*post_pred_var);
-                        Loss_4(method_num, it, run, n_f ,n_t) = Loss_4(method_num, it, run, n_f ,n_t) + log_post_pred;
-                    end
+                    %log of posterior predictive dist as the loss function 
+                    %for test data
+                    post_pred_var = diag(X_test'*posterior.sigma*X_test) + model_params.Nu_y^2;
+                    log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_test'*Posterior_mean - Y_test).^2)./(2*post_pred_var);
+                    Loss_3(method_num, it, run, n_f ,n_t) =  sum(log_post_pred);
+                    %for training data
+                    post_pred_var = diag(X_train'*posterior.sigma*X_train) + model_params.Nu_y^2;
+                    log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train'*Posterior_mean - Y_train).^2)./(2*post_pred_var);
+                    Loss_4(method_num, it, run, n_f ,n_t) = sum(log_post_pred);
                     %% make decisions based on a decision policy
                     feature_index = decision_policy(posterior, method_name, num_nonzero_features, X_train, Y_train, Theta_user, model_params, mode, sparse_params, sparse_options);
                     decisions(method_num, it, run, n_f ,n_t) = feature_index;
