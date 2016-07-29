@@ -42,5 +42,6 @@ function [ posterior ] = calculate_posterior(X, Y, Theta_user, model_params, mod
         posterior.sigma = inv(sigma_inverse);
         posterior.mean  = posterior.sigma * ( (1/model_params.Nu_y)^2 * X'*Y + temp );
     end
-    
+    %TODO: this posterior.si is required for the sparse case. fix the function interfaces later and remove this line
+    posterior.si = [];
 end
