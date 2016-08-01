@@ -91,17 +91,25 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
         %posterior predictive of user feedback. The derivations are based
         %on the paper "Bayesian Inference and Optimal Design for the Sparse
         %Linear Model". 
+                
+        alpha = 1 + diag(posterior.sigma) / model_params.Nu_user^2;
+        Utility = log(alpha) + (1 ./ alpha - 1) + ...
+            (alpha - 1) ./ (alpha.^2 * model_params.Nu_user^4) .* (diag(posterior.sigma) + model_params.Nu_user^2);
+
+%         %This is the older (and slower) version of the above code. 
+%         %I did not delete it because it also works for the case where "s" is not a basis vector.
+%         Utility = zeros(num_features,1); 
+%         for j=1: num_features
+%             %create the feature vector of user feedback
+%             s = zeros(num_features, 1 ); 
+%             s(j) = 1;
+%             alpha = 1 + model_params.Nu_user^(-2) * s'*posterior.sigma*s;
+%             Utility(j) = log(alpha) + (1/alpha -1) + ...
+%                 (alpha-1)/(alpha^2 * model_params.Nu_user^4) * (s'*posterior.sigma*s + model_params.Nu_user^2 );
+%         end
         
-        Utility = zeros(num_features,1);
-        for j=1: num_features
-            %create the feature vector of user feedback
-            s = zeros(num_features, 1 ); 
-            s(j) = 1;
-            alpha = 1 + model_params.Nu_user^(-2) * s'*posterior.sigma*s;
-            Utility(j) = log(alpha) + (1/alpha -1) + ...
-                (alpha-1)/(alpha^2 * model_params.Nu_user^4) * (s'*posterior.sigma*s + model_params.Nu_user^2 );
-        end
-        [~,selected_feature]= max(Utility);              
+        [~,selected_feature]= max(Utility);
+
     end
     
     
@@ -111,30 +119,46 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
         %the expectation is taken over the posterior predictive of user feedback. 
         %The derivations are based on the notes for Couplong bandits. 
 
-        Utility = zeros(num_features,1);        
-        for j=1: num_features           
-            %create the feature vector of user feedback
-            s = zeros(num_features, 1 );
-            s(j) = 1;
-            %calculate alpha [notes]
-            alpha = 1 + model_params.Nu_user^(-2) * s'*posterior.sigma*s;
-            %calculate the new covarianse matrix considering s
-            sigma_new = posterior.sigma - model_params.Nu_user^(-2) * 1/alpha * (posterior.sigma * s) * (s' * posterior.sigma);            
-            %some temp variable that make the calculations cleaner
-            sTsigmas = s'*posterior.sigma*s;
-            xTsigmax = diag(X'*posterior.sigma*X);
-            xTsigma_newx = diag(X'*sigma_new*X);
-            xTsigmas = X'*(posterior.sigma*s);
-           
-            %expected information gain formula: 
-            part1 = 0.5 * log( (xTsigmax + model_params.Nu_y^2)./(xTsigma_newx + model_params.Nu_y^2) );              
-            part2_numerator = xTsigma_newx + model_params.Nu_y^2 + ...
-                (model_params.Nu_y^(-2)*1/alpha*xTsigmas).^2 * (sTsigmas + model_params.Nu_y^2);
-            part2_denumerator = 2*(xTsigma_newx + model_params.Nu_y^2);
-                            
-            Utility(j) = sum(part1 + part2_numerator./part2_denumerator - 0.5);                          
-        end
-        [~,selected_feature]= max(Utility);            
+        alpha = 1 + diag(posterior.sigma) / model_params.Nu_user^2;
+        
+        sTsigmas = diag(posterior.sigma);
+        sx = posterior.sigma * X;
+        xTsigmax = sum(X .* sx, 1);
+        xTsigma_newx = bsxfun(@minus, xTsigmax, bsxfun(@rdivide, sx.^2, alpha * model_params.Nu_user^2));
+        
+        part1 = 0.5 * log(bsxfun(@rdivide, xTsigmax + model_params.Nu_y^2, xTsigma_newx + model_params.Nu_y^2));
+        part2_numerator = xTsigma_newx + model_params.Nu_y^2 + bsxfun(@times, bsxfun(@rdivide, sx, alpha * model_params.Nu_y^2).^2, sTsigmas + model_params.Nu_y^2);
+        part2_denumerator = 2 * (xTsigma_newx + model_params.Nu_y^2);
+        
+        Utility = sum(part1 + part2_numerator ./ part2_denumerator - 0.5, 2);
+
+%         %This is the older (and slower) version of the above code. 
+%         %I did not delete it because it also works for the case where "s" is not a basis vector.
+%         Utility = zeros(num_features,1);         
+%         for j=1: num_features           
+%             %create the feature vector of user feedback
+%             s = zeros(num_features, 1 );
+%             s(j) = 1;
+%             %calculate alpha [notes]
+%             alpha = 1 + model_params.Nu_user^(-2) * s'*posterior.sigma*s;
+%             %calculate the new covarianse matrix considering s
+%             sigma_new = posterior.sigma - model_params.Nu_user^(-2) * 1/alpha * (posterior.sigma * s) * (s' * posterior.sigma);            
+%             %some temp variable that make the calculations cleaner
+%             sTsigmas = s'*posterior.sigma*s;
+%             xTsigmax = diag(X'*posterior.sigma*X);
+%             xTsigma_newx = diag(X'*sigma_new*X);
+%             xTsigmas = X'*(posterior.sigma*s);
+%            
+%             %expected information gain formula: 
+%             part1 = 0.5 * log( (xTsigmax + model_params.Nu_y^2)./(xTsigma_newx + model_params.Nu_y^2) );              
+%             part2_numerator = xTsigma_newx + model_params.Nu_y^2 + ...
+%                 (model_params.Nu_y^(-2)*1/alpha*xTsigmas).^2 * (sTsigmas + model_params.Nu_y^2);
+%             part2_denumerator = 2*(xTsigma_newx + model_params.Nu_y^2);
+%                             
+%             Utility(j) = sum(part1 + part2_numerator./part2_denumerator - 0.5);                          
+%         end
+        
+        [~,selected_feature]= max(Utility);   
         
     end
     
