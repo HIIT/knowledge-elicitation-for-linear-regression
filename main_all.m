@@ -73,17 +73,17 @@ for n_f = 1:size(num_features,2);
                     sparse_options.si = posterior.si;
                     Posterior_mean = posterior.mean;
                     %% calculate different loss functions
-                    Loss_1(method_num, it, run, n_f ,n_t) = sum((X_test'*Posterior_mean- Y_test).^2);
-                    Loss_2(method_num, it, run, n_f ,n_t) = sum((Posterior_mean-theta_star).^2);
+                    Loss_1(method_num, it, run, n_f ,n_t) = mean((X_test'*Posterior_mean- Y_test).^2);
+                    Loss_2(method_num, it, run, n_f ,n_t) = mean((Posterior_mean-theta_star).^2);
                     %log of posterior predictive dist as the loss function 
                     %for test data
                     post_pred_var = diag(X_test'*posterior.sigma*X_test) + model_params.Nu_y^2;
                     log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_test'*Posterior_mean - Y_test).^2)./(2*post_pred_var);
-                    Loss_3(method_num, it, run, n_f ,n_t) =  sum(log_post_pred);
+                    Loss_3(method_num, it, run, n_f ,n_t) =  mean(log_post_pred);
                     %for training data
                     post_pred_var = diag(X_train'*posterior.sigma*X_train) + model_params.Nu_y^2;
                     log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train'*Posterior_mean - Y_train).^2)./(2*post_pred_var);
-                    Loss_4(method_num, it, run, n_f ,n_t) = sum(log_post_pred);
+                    Loss_4(method_num, it, run, n_f ,n_t) = mean(log_post_pred);
                     %% make decisions based on a decision policy
                     feature_index = decision_policy(posterior, method_name, num_nonzero_features, X_train, Y_train, Theta_user, model_params, mode, sparse_params, sparse_options);
                     decisions(method_num, it, run, n_f ,n_t) = feature_index;
