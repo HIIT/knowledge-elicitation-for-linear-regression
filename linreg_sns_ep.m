@@ -31,14 +31,14 @@ end
 [n, m] = size(x);
 pr.n = n;
 pr.m = m;
+pr.rho_nat = log(pr.rho) - log1p(-pr.rho);
 n_feedbacks = size(feedbacks, 1);
 
 %% initialize (if si is given, prior sites are initialized, but likelihood is)
 if nargin < 6 || isempty(si)
     si.prior.w.mu = zeros(m, 1);
     si.prior.w.tau = (1 / pr.tau2) * ones(m, 1);
-    si.prior.gamma.a = ones(m, 1);
-    si.prior.gamma.b = ones(m, 1);
+    si.prior.gamma.p_nat = zeros(m, 1);
 end
 S_f = zeros(m, m);
 F_f = zeros(m, 1);
@@ -104,8 +104,8 @@ denom = (1 - si.w.tau .* var_w);
 ca.w.tau = denom ./ var_w;
 ca.w.mean = (fa.w.Mean - var_w .* si.w.mu) ./ denom;
 
-ca.gamma.a = pr.rho * ones(m, 1);
-ca.gamma.b = (1 - pr.rho) * ones(m, 1);
+ca.gamma.p_nat = fa.gamma.p_nat - si.gamma.p_nat;
+ca.gamma.p = 1 ./ (1 + exp(-ca.gamma.p_nat));
 
 end
 
@@ -116,9 +116,9 @@ t = ca.w.tau + 1 ./ pr.tau2;
 
 g_var = 1 ./ ca.w.tau; % for gamma0
 mcav2 = ca.w.mean.^2;
-log_z_gamma0 = log(ca.gamma.b) - 0.5 * log(g_var) - 0.5 * mcav2 ./ g_var;
+log_z_gamma0 = log1p(-ca.gamma.p) - 0.5 * log(g_var) - 0.5 * mcav2 ./ g_var;
 g_var = pr.tau2 + g_var; % for gamma1
-log_z_gamma1 = log(ca.gamma.a) - 0.5 * log(g_var) - 0.5 * mcav2 ./ g_var;
+log_z_gamma1 = log(ca.gamma.p) - 0.5 * log(g_var) - 0.5 * mcav2 ./ g_var;
 z_gamma0 = exp(log_z_gamma0 - log_z_gamma1);
 z_gamma1 = ones(size(log_z_gamma1));
 z = 1 + z_gamma0;
@@ -157,9 +157,7 @@ new_mu_w_site = ti.w.mean ./ ti.w.var - ca.w.tau .* ca.w.mean;
 si.w.tau(update_inds) = (1 - op.damp) * si.w.tau(update_inds) + op.damp * new_tau_w_site(update_inds);
 si.w.mu(update_inds) = (1 - op.damp) * si.w.mu(update_inds) + op.damp * new_mu_w_site(update_inds);
 
-% TODO: use log scale for a/b_gamma computations?
-si.gamma.a(update_inds) = exp((1 - op.damp) * log(si.gamma.a(update_inds)) + op.damp * log(ti.gamma.mean(update_inds) ./ ca.gamma.a(update_inds)));
-si.gamma.b(update_inds) = exp((1 - op.damp) * log(si.gamma.b(update_inds)) + op.damp * log((1 - ti.gamma.mean(update_inds)) ./ ca.gamma.b(update_inds)));
+si.gamma.p_nat(update_inds) = (1 - op.damp) * si.gamma.p_nat(update_inds) + op.damp * (log(ti.gamma.mean(update_inds)) - log1p(-ti.gamma.mean(update_inds)) - ca.gamma.p_nat(update_inds));
 
 end
 
@@ -172,7 +170,8 @@ fa.w.Tau_chol = chol(fa.w.Tau, 'lower');
 fa.w.Mu = si.lik.w.Mu + si.prior.w.mu;
 fa.w.Mean = fa.w.Tau_chol' \ (fa.w.Tau_chol \ fa.w.Mu);
 
-fa.P_gamma = si.prior.gamma.a .* pr.rho;
+fa.gamma.p_nat = si.prior.gamma.p_nat + pr.rho_nat;
+fa.gamma.p = 1 ./ (1 + exp(-fa.gamma.p_nat));
 
 end
 
@@ -180,7 +179,7 @@ end
 function [converged, conv] = report_progress_and_check_convergence(conv, iter, z, fa, op)
 
 conv_z = mean(abs(z(:) - conv.z_old(:)));
-conv_P_gamma = mean(abs(fa.P_gamma(:) - conv.P_gamma_old(:)));
+conv_P_gamma = mean(abs(fa.gamma.p(:) - conv.P_gamma_old(:)));
 
 if op.verbosity > 0 && mod(iter, op.verbosity) == 0
     fprintf(1, '%d, conv = [%.2e %.2e], damp = %.2e\n', iter, conv_z, conv_P_gamma, op.damp);
@@ -190,6 +189,6 @@ end
 converged = conv_P_gamma < op.threshold;
 
 conv.z_old = z;
-conv.P_gamma_old = fa.P_gamma;
+conv.P_gamma_old = fa.gamma.p;
 
 end
