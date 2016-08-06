@@ -1,7 +1,8 @@
-function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, w_feedbacks, si)
-% -- Likelihood:
+function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, w_feedbacks, gamma_feedbacks, si)
+% -- Likelihood (y are data, f are feedbacks):
 %    p(y_i|x_i,w,sigma2) = N(y_i|w'x_i, sigma2)
-%    p(f_j|w_j,eta2) = N(f_j|w_j, eta2)
+%    p(f_w_j|w_j,eta2) = N(f_w_j|w_j, eta2)
+%    p(f_gamma_j|gamma_j) = I(gamma_j=1) Bernoulli(f_gamma_j|p_u) + I(gamma_j=0) Bernoulli(f_gamma_j|1-p_u)
 % -- Prior:
 % p(w_j|gamma_j=1) = Normal(w_j|0, tau2)
 % p(w_j|gamma_j=0) = delta(w_j)
@@ -28,14 +29,20 @@ if nargin < 5
     w_feedbacks = [];
 end
 
+if nargin < 6
+    gamma_feedbacks = [];
+end
+
 [n, m] = size(x);
 pr.n = n;
 pr.m = m;
 pr.rho_nat = log(pr.rho) - log1p(-pr.rho);
+pr.p_u_nat = log(pr.p_u) - log1p(-pr.p_u);
 n_w_feedbacks = size(w_feedbacks, 1);
+n_gamma_feedbacks = size(gamma_feedbacks, 1);
 
 %% initialize (if si is given, prior sites are initialized, but likelihood is)
-if nargin < 6 || isempty(si)
+if nargin < 7 || isempty(si)
     si.prior.w.mu = zeros(m, 1);
     si.prior.w.tau = (1 / pr.tau2) * ones(m, 1);
     si.prior.gamma.p_nat = zeros(m, 1);
@@ -50,6 +57,8 @@ if n_w_feedbacks > 0
 end
 si.lik.w.Tau = (1 / pr.sigma2) * (x' * x) + (1 / pr.eta2) * S_f;
 si.lik.w.Mu = (1 / pr.sigma2) * x' * y + (1 / pr.eta2) * F_f;
+si.gf.gamma.p_nat = zeros(m, 1);
+
 
 % full approximation
 fa = compute_full_approximation(si, pr);
@@ -65,7 +74,7 @@ for iter = 1:op.max_iter
     ca_prior = compute_w_prior_cavity(fa, si.prior, pr);
     
     % moments of tilted dists
-    [ti_prior, z] = compute_w_prior_tilt(ca_prior, pr);
+    [ti_prior, z_w] = compute_w_prior_tilt(ca_prior, pr);
     
     % site updates
     si.prior = update_w_prior_sites(si.prior, ca_prior, ti_prior, op);
@@ -73,8 +82,23 @@ for iter = 1:op.max_iter
     %% full approx update
     fa = compute_full_approximation(si, pr);
     
+    if n_gamma_feedbacks > 0
+        %% gamma feedback updates
+        % cavity
+        ca_gf = compute_gf_cavity(fa, si.gf);
+
+        % moments of tilted dists
+        ti_gf = compute_gf_tilt(ca_gf, pr, gamma_feedbacks);
+
+        % site updates
+        si.gf = update_gf_sites(si.gf, ca_gf, ti_gf, gamma_feedbacks, op);
+
+        %% full approx update
+        fa = compute_full_approximation(si, pr);
+    end
+
     %% show progress and check for convergence
-    [converged, conv] = report_progress_and_check_convergence(conv, iter, z, fa, op);
+    [converged, conv] = report_progress_and_check_convergence(conv, iter, z_w, fa, op);
     if converged
         if op.verbosity > 0
             fprintf(1, 'EP converged on iteration %d\n', iter);
@@ -90,6 +114,24 @@ if op.verbosity > 0 && converged == 0
     fprintf(1, 'EP hit maximum number of iterations\n');
 end
 
+end
+
+
+function ca = compute_gf_cavity(fa, si)
+    ca.gamma.p_nat = fa.gamma.p_nat - si.gamma.p_nat;
+end
+
+
+function ti = compute_gf_tilt(ca, pr, feedbacks)
+    % feedbacks: first is value, second index.
+    % Computes only those with feedback:
+    ti.gamma.mean = 1 ./ (1 + exp(-(ca.gamma.p_nat(feedbacks(:,2)) + (2 * feedbacks(:, 1) - 1) .* pr.p_u_nat)));
+    ti.gamma.mean = max(min(ti.gamma.mean, 1-eps), eps);
+end
+
+
+function [si] = update_gf_sites(si, ca, ti, feedbacks, op)
+    si.gamma.p_nat(feedbacks(:,2)) = (1 - op.damp) * si.gamma.p_nat(feedbacks(:,2)) + op.damp * (log(ti.gamma.mean) - log1p(-ti.gamma.mean) - ca.gamma.p_nat(feedbacks(:,2)));
 end
 
 
@@ -171,7 +213,7 @@ fa.w.Tau_chol = chol(fa.w.Tau, 'lower');
 fa.w.Mu = si.lik.w.Mu + si.prior.w.mu;
 fa.w.Mean = fa.w.Tau_chol' \ (fa.w.Tau_chol \ fa.w.Mu);
 
-fa.gamma.p_nat = si.prior.gamma.p_nat + pr.rho_nat;
+fa.gamma.p_nat = si.prior.gamma.p_nat + si.gf.gamma.p_nat + pr.rho_nat;
 fa.gamma.p = 1 ./ (1 + exp(-fa.gamma.p_nat));
 
 end

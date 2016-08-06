@@ -10,7 +10,7 @@ function [ posterior ] = calculate_posterior(X, Y, Theta_user, model_params, mod
     if mode == 1
         %assume sparse prior (spike and slab) and approximate the posterior
         %with a multivariate Gaussian distribution using EP algorithm
-        [fa, si, converged] = linreg_sns_ep(Y, X', sparse_params, sparse_options, Theta_user, sparse_options.si);
+        [fa, si, converged] = linreg_sns_ep(Y, X', sparse_params, sparse_options, Theta_user, [], sparse_options.si);
         posterior.si = si;
         posterior.sigma = inv(fa.w.Tau);
         posterior.mean  = fa.w.Mean;        
