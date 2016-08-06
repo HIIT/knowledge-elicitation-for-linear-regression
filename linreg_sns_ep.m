@@ -128,6 +128,7 @@ e2_w_tilt = z_gamma1 .* (1 ./ t + 1 ./ t.^2 .* (ca.w.tau .* ca.w.mean).^2) ./ z;
 ti.w.var = e2_w_tilt - ti.w.mean.^2;
 
 ti.gamma.mean = z_gamma1 ./ z;
+ti.gamma.mean = max(min(ti.gamma.mean, 1-eps), eps);
 
 end
 
