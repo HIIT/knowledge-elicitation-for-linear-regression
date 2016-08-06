@@ -1,4 +1,4 @@
-function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, feedbacks, si)
+function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, w_feedbacks, si)
 % -- Likelihood:
 %    p(y_i|x_i,w,sigma2) = N(y_i|w'x_i, sigma2)
 %    p(f_j|w_j,eta2) = N(f_j|w_j, eta2)
@@ -13,9 +13,9 @@ function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, feedbacks, si)
 % Inputs:
 % y          target values (n x 1)
 % x          covariates (n x m)
-% pr         prior parameters (struct)
-% op         options (struct)
-% feedbacks  values (1st column) and indices (2nd column) of feedback (n_feedbacks x 2)
+% pr         prior and other fixed model parameters (struct)
+% op         options for the EP algorithm (struct)
+% w_feedbacks  values (1st column) and indices (2nd column) of feedback (n_feedbacks x 2)
 %
 % Outputs:
 % fa         EP posterior approximation (struct)
@@ -25,14 +25,14 @@ function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, feedbacks, si)
 % Tomi Peltola, tomi.peltola@aalto.fi
 
 if nargin < 5
-    feedbacks = [];
+    w_feedbacks = [];
 end
 
 [n, m] = size(x);
 pr.n = n;
 pr.m = m;
 pr.rho_nat = log(pr.rho) - log1p(-pr.rho);
-n_feedbacks = size(feedbacks, 1);
+n_w_feedbacks = size(w_feedbacks, 1);
 
 %% initialize (if si is given, prior sites are initialized, but likelihood is)
 if nargin < 6 || isempty(si)
@@ -42,10 +42,10 @@ if nargin < 6 || isempty(si)
 end
 S_f = zeros(m, m);
 F_f = zeros(m, 1);
-if n_feedbacks > 0
-    for i = 1:n_feedbacks
-        S_f(feedbacks(i, 2), feedbacks(i, 2)) = 1;
-        F_f(feedbacks(i, 2)) = feedbacks(i, 1);
+if n_w_feedbacks > 0
+    for i = 1:n_w_feedbacks
+        S_f(w_feedbacks(i, 2), w_feedbacks(i, 2)) = 1;
+        F_f(w_feedbacks(i, 2)) = w_feedbacks(i, 1);
     end
 end
 si.lik.w.Tau = (1 / pr.sigma2) * (x' * x) + (1 / pr.eta2) * S_f;
@@ -60,15 +60,15 @@ conv.z_old = Inf * ones(m, 1);
 
 %% loop parallel EP
 for iter = 1:op.max_iter
-    %% prior updates
+    %% w prior updates
     % cavity
-    ca_prior = compute_prior_cavity(fa, si.prior, pr);
+    ca_prior = compute_w_prior_cavity(fa, si.prior, pr);
     
     % moments of tilted dists
-    [ti_prior, z] = compute_prior_tilt(ca_prior, pr);
+    [ti_prior, z] = compute_w_prior_tilt(ca_prior, pr);
     
     % site updates
-    si.prior = site_updates_prior(si.prior, ca_prior, ti_prior, op);
+    si.prior = update_w_prior_sites(si.prior, ca_prior, ti_prior, op);
     
     %% full approx update
     fa = compute_full_approximation(si, pr);
@@ -93,7 +93,7 @@ end
 end
 
 
-function ca = compute_prior_cavity(fa, si, pr)
+function ca = compute_w_prior_cavity(fa, si, pr)
 
 m = pr.m;
 
@@ -110,7 +110,7 @@ ca.gamma.p = 1 ./ (1 + exp(-ca.gamma.p_nat));
 end
 
 
-function [ti, z] = compute_prior_tilt(ca, pr)
+function [ti, z] = compute_w_prior_tilt(ca, pr)
 
 t = ca.w.tau + 1 ./ pr.tau2;
 
@@ -132,7 +132,7 @@ ti.gamma.mean = z_gamma1 ./ z;
 end
 
 
-function [si, nonpositive_cavity_vars, nonpositive_site_var_proposals] = site_updates_prior(si, ca, ti, op)
+function [si, nonpositive_cavity_vars, nonpositive_site_var_proposals] = update_w_prior_sites(si, ca, ti, op)
 
 nonpositive_site_var_proposals = false;
 
