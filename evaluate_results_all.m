@@ -12,6 +12,10 @@ num_methods = size(Method_list,2);
 num_iterations = size(decisions,2);
 num_runs = size(decisions,3);
 
+
+disp(['print a summary of simulation setup here (TODO later)', num2str(0)])
+
+
 for loss_function = 1:4     
     if loss_function == 1
         loss = Loss_1;
@@ -79,8 +83,8 @@ for loss_function = 1:4
             axis xy
             title(Method_list(method))
             xlabel('number of training data')
-            set(gca, 'XTick', 1:length(temp_num_trainingdata)/5:length(temp_num_trainingdata)); % Change x-axis ticks
-            set(gca, 'XTickLabel', temp_num_trainingdata(1:length(temp_num_trainingdata)/5:length(temp_num_trainingdata))); % Change x-axis ticks labels.        
+            set(gca, 'XTick', 1:floor(length(temp_num_trainingdata)/5):length(temp_num_trainingdata)); % Change x-axis ticks
+            set(gca, 'XTickLabel', temp_num_trainingdata(1:floor(length(temp_num_trainingdata)/5):length(temp_num_trainingdata))); % Change x-axis ticks labels.        
             ylabel('number of expert feedbacks')    
         %     pcolor(heat_map(:,:,method))            
         %     colormap(gray)     

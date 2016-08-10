@@ -58,7 +58,7 @@ for n_f = 1:size(num_features,2);
             num_nonzero_features = min( num_features(n_f), max_num_nonzero_features);
             %Theta_star is the true value of the unknown weight vector
             % non-zero elements of theta_star are generated based on the model parameters
-            theta_star = model_params.Nu_theta*randn( num_nonzero_features, 1); % We are using randn to generate theta start
+            theta_star = model_params.Nu_theta*randn( num_nonzero_features, 1); 
             theta_star = [theta_star; zeros(num_features(n_f)-num_nonzero_features,1)]; % make it sparse
             z_star = theta_star ~= 0; % the true value for the latent variable Z in spike and slab model
             %generate new data for each run (because the results is sensitive to the covariate values)
@@ -76,18 +76,17 @@ for n_f = 1:size(num_features,2);
                 for it = 1:num_iterations %number of user feedback
                     posterior = calculate_posterior(X_train, Y_train, Feedback, model_params, MODE, sparse_params, sparse_options);
                     sparse_options.si = posterior.si;
-                    Posterior_mean = posterior.mean;
                     %% calculate different loss functions
-                    Loss_1(method_num, it, run, n_f ,n_t) = mean((X_test'*Posterior_mean- Y_test).^2);
-                    Loss_2(method_num, it, run, n_f ,n_t) = mean((Posterior_mean-theta_star).^2);
+                    Loss_1(method_num, it, run, n_f ,n_t) = mean((X_test'*posterior.mean- Y_test).^2);
+                    Loss_2(method_num, it, run, n_f ,n_t) = mean((posterior.mean-theta_star).^2);
                     %log of posterior predictive dist as the loss function 
                     %for test data
                     post_pred_var = diag(X_test'*posterior.sigma*X_test) + model_params.Nu_y^2;
-                    log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_test'*Posterior_mean - Y_test).^2)./(2*post_pred_var);
+                    log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_test'*posterior.mean - Y_test).^2)./(2*post_pred_var);
                     Loss_3(method_num, it, run, n_f ,n_t) =  mean(log_post_pred);
                     %for training data
                     post_pred_var = diag(X_train'*posterior.sigma*X_train) + model_params.Nu_y^2;
-                    log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train'*Posterior_mean - Y_train).^2)./(2*post_pred_var);
+                    log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train'*posterior.mean - Y_train).^2)./(2*post_pred_var);
                     Loss_4(method_num, it, run, n_f ,n_t) = mean(log_post_pred);
                     %% make decisions based on a decision policy
                     feature_index = decision_policy(posterior, method_name, num_nonzero_features, X_train, Y_train, Feedback, model_params, MODE, sparse_params, sparse_options);
@@ -102,5 +101,6 @@ for n_f = 1:size(num_features,2);
 end
 
 %% averaging and plotting
-save('results_all', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'num_nonzero_features', 'Method_list', 'num_features','num_trainingdata', 'MODE')
+save('results_all', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'model_params', ...
+    'num_nonzero_features', 'Method_list', 'num_features','num_trainingdata', 'MODE')
 evaluate_results_all

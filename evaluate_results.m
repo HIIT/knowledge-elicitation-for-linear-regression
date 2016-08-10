@@ -8,12 +8,14 @@ num_methods = size(Method_list,2);
 num_iterations = size(decisions,2);
 num_runs = size(decisions,3);
 
+disp(['print a summary of simulation setup here (TODO later)', num2str(0)])
+
 figure
 plot(mean(Loss_1,3)','.-');
 legend(Method_list)
 title('Loss function')
 xlabel('number of expert feedbacks')
-ylabel('Loss value (X_test*theta - Y_test)')
+ylabel('Loss value (X-test*theta - Y-test)')
 
 figure
 plot(mean(Loss_2,3)','.-');
@@ -61,11 +63,11 @@ ylabel('0 means zero features, 1 means non-zero features')
 
 % legend(Method_list)
 
-% for method =1 : num_methods
-%     figure
-%     data = reshape(decisions(method,:,:),[num_iterations*num_runs,1]);
-%     hist(data,10)
-% end
-% 
+for method =1 : num_methods
+    figure
+    data = reshape(decisions(method,:,:),[num_iterations*num_runs,1]);
+    hist(data,num_features)
+end
+
 
     

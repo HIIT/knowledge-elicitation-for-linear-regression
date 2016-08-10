@@ -13,6 +13,9 @@ function [ posterior ] = calculate_posterior(X, Y, feedback, model_params, MODE,
         %assume sparse prior (spike and slab) and approximate the posterior
         %with a multivariate Gaussian distribution using EP algorithm
         [fa, si, converged] = linreg_sns_ep(Y, X', sparse_params, sparse_options, feedback, [], sparse_options.si);
+        if converged ~= 1
+            disp(['linreg_sns_ep did not converge for MODE = ', num2str(MODE)])
+        end
         posterior.si = si;
         posterior.sigma = inv(fa.w.Tau);
         posterior.mean  = fa.w.Mean;        
@@ -53,10 +56,13 @@ function [ posterior ] = calculate_posterior(X, Y, feedback, model_params, MODE,
         %weights are approximated by a multivariate Gaussian distribution.
         %latent variables are approximated by Bernoulli distribution. 
         [fa, si, converged] = linreg_sns_ep(Y, X', sparse_params, sparse_options, [] , feedback, sparse_options.si);
+        if converged ~= 1
+            disp(['linreg_sns_ep did not converge for MODE = ', num2str(MODE)])
+        end
         posterior.si = si;
         posterior.sigma = inv(fa.w.Tau);
         posterior.mean  = fa.w.Mean;       
-        posterior.p   = fa.gamma.p; % TODO: VERIFY THIS LATER
+        posterior.p   = fa.gamma.p;
         
         
     end
