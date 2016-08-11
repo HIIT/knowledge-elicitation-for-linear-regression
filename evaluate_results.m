@@ -8,7 +8,13 @@ num_methods = size(Method_list,2);
 num_iterations = size(decisions,2);
 num_runs = size(decisions,3);
 
-disp(['print a summary of simulation setup here (TODO later)', num2str(0)])
+%display useful information about the simulation
+disp(struct2table(model_params));
+disp(['Number of features: ', num2str(num_features),'.']);
+disp(['Number of non-zero features: ', num2str(num_nonzero_features),'.']);
+disp(['Number of training data: ', num2str(num_trainingdata),'.']);
+disp(['Averaged over ', num2str(num_runs), ' runs.']);
+
 
 figure
 plot(mean(Loss_1,3)','.-');

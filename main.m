@@ -2,7 +2,7 @@ close all
 clear all
 %%TODO: 
 % Real data (GDSC) is very strange. The code is not good for it yet.
-
+% profile on
 %% Parameters and Simulator setup
 MODE                     = 2; 
 % MODE specifies the  type of feedback and the model that we are using
@@ -14,29 +14,29 @@ DATA_SOURCE = 'SIMULATION_DATA'; %use simulated data
 % DATA_SOURCE = 'GDSC_DATA'; %Genomics of Drug Sensitivity in Cancer (GDSC)(not working)
 
 %data parameters for SIMULATION_DATA
-num_features         = 50; % total number of features
-num_trainingdata     = 2; % number of samples (patients with available drug response)
+num_features         = 30; % total number of features
+num_trainingdata     = 5; % number of samples (patients with available drug response)
 num_nonzero_features = 10; % features that are nonzero
 % One way to measure to check the method is to fix the following ration: #num_traingdata/num_features
 
 %Algorithm parameters
-num_iterations = 50; %total number of user feedback
-num_runs       = 10;  %total number of runs (necessary for averaging results)
+num_iterations = 20; %total number of user feedback
+num_runs       = 50;  %total number of runs (necessary for averaging results)
 num_data       = 500 + num_trainingdata; % total number of data (training and test) - this is not important
 
 %model parameters
-model_params   = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.9);
+model_params   = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.95, 'P_zero', num_nonzero_features/num_features);
 normalization_method = 1; %normalization method for generating the data (Xs)
 sparse_options = struct('damp',0.5, 'damp_decay',1, 'robust_updates',2, 'verbosity',0, 'max_iter',100, 'threshold',1e-5, 'min_site_prec',1e-6);
 sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2,'p_u', model_params.P_user);
-sparse_params.rho = num_nonzero_features/num_features;
+sparse_params.rho = model_params.P_zero;
 %% METHOD LIST
 % Set the desirable methods to 'True' and others to 'False'. only the 'True' methods will be considered in the simulation
 METHODS_ALL = {
      'False',  'Max(90% UCB,90% LCB)'; 
      'True',  'Uniformly random';
      'True', 'random on the relevelant features';
-     'False', 'max variance';
+     'True', 'max variance';
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
@@ -112,7 +112,7 @@ for run = 1:num_runs
         end
     end
 end
-
+% profile off
 %% averaging and plotting
 save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'model_params', ...
     'num_nonzero_features', 'Method_list',  'num_features','num_trainingdata', 'MODE')

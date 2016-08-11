@@ -8,12 +8,20 @@ close all
 load('results_all')
 
 num_methods = size(Method_list,2);
-
 num_iterations = size(decisions,2);
 num_runs = size(decisions,3);
 
 
-disp(['print a summary of simulation setup here (TODO later)', num2str(0)])
+%display useful information about the simulation
+disp(struct2table(model_params));
+disp(['Number of non-zero features: ', num2str(max_num_nonzero_features),'.']);
+if size(num_trainingdata,2) == 1
+    disp(['The number of training data is fixed to ', num2str(num_trainingdata) ,'. (runs over dimensions).']);
+end
+if size(num_features,2) == 1
+    disp(['The number of dimensions is fixed to ', num2str(num_features) ,'. (runs over training data.)']);
+end
+disp(['Averaged over ', num2str(num_runs), ' runs']);
 
 
 for loss_function = 1:4     
@@ -54,8 +62,7 @@ for loss_function = 1:4
         %     pcolor(heat_map(:,:,method))
         %     colormap(gray)     
         %     colorbar();
-        end
-        disp(['The number of training data is fixed to ', num2str(num_trainingdata(t_index))])
+        end       
     end
     
     if size(num_features,2) == 1
@@ -89,8 +96,7 @@ for loss_function = 1:4
         %     pcolor(heat_map(:,:,method))            
         %     colormap(gray)     
         %     colorbar();
-        end
-        disp(['The number of dimensions is fixed to ', num2str(num_features(f_index))])
+        end       
     end   
 end
 

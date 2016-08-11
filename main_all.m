@@ -9,7 +9,7 @@ MODE                     = 2;
 %           2: Feedback on relevance of features. Model: spike and slab prior
 %data parameters
 num_features             = 100; %[start,step,max] This can be a set of values (e.g. 1:100) or just one value (e.g. 100)
-num_trainingdata         = 5:20:400; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
+num_trainingdata         = 5:20:200; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
 max_num_nonzero_features = 10; % maximum number of features that are nonzero --- AKA sparsity measure
 
 
@@ -25,9 +25,9 @@ sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_th
 %% METHOD LIST
 % Set the desirable methods to 'True' and others to 'False'. only the 'True' methods will be considered in the simulation
 METHODS_ALL = {
-     'True',  'Max(90% UCB,90% LCB)'; 
+     'False',  'Max(90% UCB,90% LCB)'; 
      'True',  'Uniformly random';
-     'False', 'random on the relevelant features';
+     'True', 'random on the relevelant features';
      'True', 'max variance';
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
@@ -102,5 +102,5 @@ end
 
 %% averaging and plotting
 save('results_all', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'model_params', ...
-    'num_nonzero_features', 'Method_list', 'num_features','num_trainingdata', 'MODE')
+    'max_num_nonzero_features', 'Method_list', 'num_features','num_trainingdata', 'MODE')
 evaluate_results_all
