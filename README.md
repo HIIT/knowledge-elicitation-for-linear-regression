@@ -10,7 +10,11 @@ main_all:
     
 Depending on the MODE parameter, the type of model and feedback changes:
            MODE = 
+           
            0: Feedback on weight values. Model: Gaussian prior 
+           
            1: Feedback on weight values. Model: spike and slab prior
+           
            2: Feedback on relevance of features. Model: spike and slab prior
+           
 
