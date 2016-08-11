@@ -12,11 +12,12 @@ function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, w_feedbacks, gamma_fe
 % q(gamma) = \prod Bernoulli(\gamma_j|p_gamma_j)
 %
 % Inputs:
-% y          target values (n x 1)
-% x          covariates (n x m)
-% pr         prior and other fixed model parameters (struct)
-% op         options for the EP algorithm (struct)
-% w_feedbacks  values (1st column) and indices (2nd column) of feedback (n_feedbacks x 2)
+% y                target values (n x 1)
+% x                covariates (n x m)
+% pr               prior and other fixed model parameters (struct)
+% op               options for the EP algorithm (struct)
+% w_feedbacks      values (1st column) and indices (2nd column) of feedback (n_w_feedbacks x 2)
+% gamma_feedbacks  values (1st column, 0/1) and indices (2nd column) of feedback (n_gamma_feedbacks x 2)
 %
 % Outputs:
 % fa         EP posterior approximation (struct)
@@ -41,7 +42,7 @@ pr.p_u_nat = log(pr.p_u) - log1p(-pr.p_u);
 n_w_feedbacks = size(w_feedbacks, 1);
 n_gamma_feedbacks = size(gamma_feedbacks, 1);
 
-%% initialize (if si is given, prior sites are initialized, but likelihood is)
+%% initialize (if si is given, prior sites are not re-initialized, but likelihood is)
 if nargin < 7 || isempty(si)
     si.prior.w.mu = zeros(m, 1);
     si.prior.w.tau = (1 / pr.tau2) * ones(m, 1);
