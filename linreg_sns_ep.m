@@ -119,20 +119,26 @@ end
 
 
 function ca = compute_gf_cavity(fa, si)
-    ca.gamma.p_nat = fa.gamma.p_nat - si.gamma.p_nat;
+
+ca.gamma.p_nat = fa.gamma.p_nat - si.gamma.p_nat;
+
 end
 
 
 function ti = compute_gf_tilt(ca, pr, feedbacks)
-    % feedbacks: first is value, second index.
-    % Computes only those with feedback:
-    ti.gamma.mean = 1 ./ (1 + exp(-(ca.gamma.p_nat(feedbacks(:,2)) + (2 * feedbacks(:, 1) - 1) .* pr.p_u_nat)));
-    ti.gamma.mean = max(min(ti.gamma.mean, 1-eps), eps);
+
+% feedbacks: first is value, second index.
+% Computes only those with feedback:
+ti.gamma.mean = 1 ./ (1 + exp(-(ca.gamma.p_nat(feedbacks(:,2)) + (2 * feedbacks(:, 1) - 1) .* pr.p_u_nat)));
+ti.gamma.mean = max(min(ti.gamma.mean, 1-eps), eps);
+
 end
 
 
 function [si] = update_gf_sites(si, ca, ti, feedbacks, op)
-    si.gamma.p_nat(feedbacks(:,2)) = (1 - op.damp) * si.gamma.p_nat(feedbacks(:,2)) + op.damp * (log(ti.gamma.mean) - log1p(-ti.gamma.mean) - ca.gamma.p_nat(feedbacks(:,2)));
+
+si.gamma.p_nat(feedbacks(:,2)) = (1 - op.damp) * si.gamma.p_nat(feedbacks(:,2)) + op.damp * (log(ti.gamma.mean) - log1p(-ti.gamma.mean) - ca.gamma.p_nat(feedbacks(:,2)));
+
 end
 
 
@@ -214,6 +220,7 @@ fa = compute_full_approximation_gamma(fa, si, pr);
 
 end
 
+
 function fa = compute_full_approximation_w(fa, si, pr)
 
 % m x m and m x 1
@@ -223,6 +230,7 @@ fa.w.Mu = si.lik.w.Mu + si.prior.w.mu;
 fa.w.Mean = fa.w.Tau_chol' \ (fa.w.Tau_chol \ fa.w.Mu);
 
 end
+
 
 function fa = compute_full_approximation_gamma(fa, si, pr)
 
