@@ -18,7 +18,7 @@ num_iterations = 50; %total number of user feedback
 num_runs       = 50; %total number of runs (necessary for averaging results) 
 
 %model parameters
-model_params   = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.9);
+model_params   = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.95);
 normalization_method = 1; %normalization method for generating the data (Xs)
 sparse_options = struct('damp',0.5, 'damp_decay',1, 'robust_updates',2, 'verbosity',0, 'max_iter',100, 'threshold',1e-5, 'min_site_prec',1e-6);
 sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2,'p_u', model_params.P_user);

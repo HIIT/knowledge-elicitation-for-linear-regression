@@ -17,6 +17,14 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
     %randomly choose one feature
     if strcmp(Method_name,'Uniformly random') 
         selected_feature = ceil(rand*num_features);
+        
+        if MODE == 2 && size(Feedback,1)~= 0           
+            %ask about each feature only once
+            remains = setdiff(1:num_features,Feedback(:,2));
+            if size(remains,2) ~= 0
+                selected_feature = remains(ceil(rand*size(remains,2)));               
+            end
+        end
     end
     
     
@@ -31,6 +39,17 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
         %Assume that features of Theta are independent
         VARs = diag(posterior.sigma);
         [~,selected_feature]= max(VARs);
+        
+        if MODE == 2 && size(Feedback,1)~= 0
+            %ask about each feature only once
+            [~,indices] = sort(VARs,'descend');
+            for i=1:num_features
+                if sum(find(Feedback(:,2)==indices(i)))==0
+                    selected_feature = indices(i);
+                    return
+                end
+            end         
+        end
     end
     
     % If the feedback is on the value of features
@@ -214,7 +233,19 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
                 
                 Utility(j) = post_pred_f0 * KL_0 + (1-post_pred_f0) * KL_1;
             end
-            [~,selected_feature]= max(Utility);   
+            
+            [~,selected_feature]= max(Utility); 
+            %ask about each feature only once
+            if size(Feedback,1)~= 0
+                [~,indices] = sort(Utility,'descend');
+                for i=1:num_features
+                    if sum(find(Feedback(:,2)==indices(i)))==0
+                        selected_feature = indices(i);
+                        return
+                    end
+                end
+            end
+              
         end        
     end
     
