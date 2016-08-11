@@ -94,8 +94,8 @@ for iter = 1:op.max_iter
         % site updates
         si.gf = update_gf_sites(si.gf, ca_gf, ti_gf, gamma_feedbacks, op);
 
-        %% full approx update
-        fa = compute_full_approximation(si, pr);
+        %% full approx update (update only gamma part as only those sites have been updated)
+        fa = compute_full_approximation_gamma(fa, si, pr);
     end
 
     %% show progress and check for convergence
@@ -208,11 +208,23 @@ end
 
 function fa = compute_full_approximation(si, pr)
 
+fa = struct;
+fa = compute_full_approximation_w(fa, si, pr);
+fa = compute_full_approximation_gamma(fa, si, pr);
+
+end
+
+function fa = compute_full_approximation_w(fa, si, pr)
+
 % m x m and m x 1
 fa.w.Tau = si.lik.w.Tau + diag(si.prior.w.tau);
 fa.w.Tau_chol = chol(fa.w.Tau, 'lower');
 fa.w.Mu = si.lik.w.Mu + si.prior.w.mu;
 fa.w.Mean = fa.w.Tau_chol' \ (fa.w.Tau_chol \ fa.w.Mu);
+
+end
+
+function fa = compute_full_approximation_gamma(fa, si, pr)
 
 fa.gamma.p_nat = si.prior.gamma.p_nat + si.gf.gamma.p_nat + pr.rho_nat;
 fa.gamma.p = 1 ./ (1 + exp(-fa.gamma.p_nat));
