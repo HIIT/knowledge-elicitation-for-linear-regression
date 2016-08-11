@@ -38,23 +38,14 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
     if strcmp(Method_name,'max variance')
         %Assume that features of Theta are independent
         VARs = diag(posterior.sigma);
-        [~,selected_feature]= max(VARs);
-        
-        if MODE == 2 && size(Feedback,1)~= 0
+        [~,selected_feature]= max(VARs);        
+        if MODE == 2 
             % ask about each feature only once (note: one must not ask for more feedbacks than the number of features
             % or this will start giving 1 always)
             if ~isempty(Feedback)
-                Utility(Feedback(:,2)) = -inf;
+                VARs(Feedback(:,2)) = -inf;
             end
-            [~,selected_feature] = max(Utility);
-%             %ask about each feature only once
-%             [~,indices] = sort(VARs,'descend');
-%             for i=1:num_features
-%                 if sum(find(Feedback(:,2)==indices(i)))==0
-%                     selected_feature = indices(i);
-%                     return
-%                 end
-%             end
+            [~,selected_feature] = max(VARs);
         end
     end
     
@@ -246,16 +237,6 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, num_no
                 Utility(Feedback(:,2)) = -inf;
             end
             [~,selected_feature] = max(Utility);
-%             %ask about each feature only once
-%             if size(Feedback,1)~= 0
-%                 [~,indices] = sort(Utility,'descend');
-%                 for i=1:num_features
-%                     if sum(find(Feedback(:,2)==indices(i)))==0
-%                         selected_feature = indices(i);
-%                         return
-%                     end
-%                 end
-%             end
               
         end        
     end
