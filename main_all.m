@@ -27,12 +27,13 @@ sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_th
 METHODS_ALL = {
      'False',  'Max(90% UCB,90% LCB)'; 
      'True',  'Uniformly random';
-     'True', 'random on the relevelant features';
+     'False', 'random on the relevelant features';
      'True', 'max variance';
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
-     'True',  'Expected information gain (post_pred)'
+     'False',  'Expected information gain (post_pred)';
+     'True', 'Expected information gain (post_pred), fast approx'
      };
 Method_list = [];
 for m = 1:size(METHODS_ALL,1)
