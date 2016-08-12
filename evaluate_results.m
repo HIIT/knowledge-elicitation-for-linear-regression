@@ -66,14 +66,12 @@ title('Accumulated average suggestion behavior of each method')
 xlabel('number of expert feedbacks')
 ylabel('0 means zero features, 1 means non-zero features')
 
-
-% legend(Method_list)
-
-for method =1 : num_methods
-    figure
-    data = reshape(decisions(method,:,:),[num_iterations*num_runs,1]);
-    hist(data,num_features)
-end
+% %show the histogram of decisions
+% for method =1 : num_methods
+%     figure
+%     data = reshape(decisions(method,:,:),[num_iterations*num_runs,1]);
+%     hist(data,num_features)
+% end
 
 
     
