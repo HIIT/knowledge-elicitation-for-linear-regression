@@ -14,7 +14,7 @@ function [ X_all ] = generate_data( num_data,num_features, normalization_method 
     end
     if normalization_method == 3
         %normalization method 3: spike paper, alternative
-        X_all = mvnrnd(zeros(num_features,1), 0.4*eye(num_features,num_features),num_data);
+        X_all = mvnrnd(zeros(num_features,1), 1.0*eye(num_features,num_features),num_data);
     end
     
 end
