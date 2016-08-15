@@ -13,6 +13,7 @@ disp(struct2table(model_params));
 disp(['Number of features: ', num2str(num_features),'.']);
 disp(['Number of non-zero features: ', num2str(num_nonzero_features),'.']);
 disp(['Number of training data: ', num2str(num_trainingdata),'.']);
+disp(['Data normalization method: ', num2str(normalization_method),'.']);
 disp(['Averaged over ', num2str(num_runs), ' runs.']);
 
 

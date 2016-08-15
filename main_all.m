@@ -103,5 +103,5 @@ end
 
 %% averaging and plotting
 save('results_all', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'model_params', ...
-    'max_num_nonzero_features', 'Method_list', 'num_features','num_trainingdata', 'MODE')
+    'max_num_nonzero_features', 'Method_list', 'num_features','num_trainingdata', 'MODE', 'normalization_method')
 evaluate_results_all

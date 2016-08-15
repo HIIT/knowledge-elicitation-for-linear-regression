@@ -21,6 +21,7 @@ end
 if size(num_features,2) == 1
     disp(['The number of dimensions is fixed to ', num2str(num_features) ,'. (runs over training data.)']);
 end
+disp(['Data normalization method: ', num2str(normalization_method),'.']);
 disp(['Averaged over ', num2str(num_runs), ' runs']);
 
 
