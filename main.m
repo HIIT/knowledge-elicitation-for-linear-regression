@@ -14,18 +14,18 @@ DATA_SOURCE = 'SIMULATION_DATA'; %use simulated data
 % DATA_SOURCE = 'GDSC_DATA'; %Genomics of Drug Sensitivity in Cancer (GDSC)(not working)
 
 %data parameters for SIMULATION_DATA
-num_features         = 30; % total number of features
+num_features         = 100; % total number of features
 num_trainingdata     = 5; % number of samples (patients with available drug response)
 num_nonzero_features = 10; % features that are nonzero
 % One way to measure to check the method is to fix the following ration: #num_traingdata/num_features
 
 %Algorithm parameters
-num_iterations = 20; %total number of user feedback
-num_runs       = 50;  %total number of runs (necessary for averaging results)
+num_iterations = 100; %total number of user feedback
+num_runs       = 100;  %total number of runs (necessary for averaging results)
 num_data       = 500 + num_trainingdata; % total number of data (training and test) - this is not important
 
 %model parameters
-model_params   = struct('Nu_y',sqrt(5), 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.95, 'P_zero', num_nonzero_features/num_features);
+model_params   = struct('Nu_y',0.1, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, 'P_zero', num_nonzero_features/num_features);
 normalization_method = 1; %normalization method for generating the data (Xs)
 sparse_options = struct('damp',0.5, 'damp_decay',1, 'robust_updates',2, 'verbosity',0, 'max_iter',100, 'threshold',1e-5, 'min_site_prec',1e-6);
 sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2,'p_u', model_params.P_user);
@@ -40,7 +40,7 @@ METHODS_ALL = {
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
-     'True',  'Expected information gain (post_pred)'
+     'False',  'Expected information gain (post_pred)'
      'True', 'Expected information gain (post_pred), fast approx'
      };
 Method_list = [];
