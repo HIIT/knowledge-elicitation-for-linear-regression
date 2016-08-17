@@ -1,32 +1,26 @@
 close all
 clear all
-%%TODO: 
-% Real data (GDSC) is very strange. The code is not good for it yet.
-% profile on
-%% Parameters and Simulator setup
-MODE                     = 2; 
-% MODE specifies the  type of feedback and the model that we are using
-%           0: Feedback on weight values. Model: Gaussian prior 
-%           1: Feedback on weight values. Model: spike and slab prior
-%           2: Feedback on relevance of features. Model: spike and slab prior
 
-DATA_SOURCE = 'SIMULATION_DATA'; %use simulated data
-% DATA_SOURCE = 'GDSC_DATA'; %Genomics of Drug Sensitivity in Cancer (GDSC)(not working)
+%% Parameters
+MODE = 2; 
+%The following line loads X_all, Y_all, and z_star
+load('CanDI_text_data\candi_data');
+k_fold       = 10;
+num_features = size(X_all,2);
+num_data     = size(X_all,1);
+num_test     = k_fold;
+num_trainingdata    = num_data- num_test;
+%Algorithm parameters
+num_iterations   = num_features; %total number of user feedback
+num_runs         = 2; 
+theta_star = zeros(num_features,1);  %we do not have theta_star here, I just set it as zeros
 
 %data parameters for SIMULATION_DATA
-num_features         = 100; % total number of features
-num_trainingdata     = 5; % number of samples (patients with available drug response)
-num_nonzero_features = 10; % features that are nonzero
-% One way to measure to check the method is to fix the following ration: #num_traingdata/num_features
-
-%Algorithm parameters
-num_iterations = 100; %total number of user feedback
-num_runs       = 100;  %total number of runs (necessary for averaging results)
-num_data       = 500 + num_trainingdata; % total number of data (training and test) - this is not important
+num_nonzero_features = 10; % features that are nonzero (NOT USED HERE)
 
 %model parameters
-model_params   = struct('Nu_y',0.1, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, 'P_zero', num_nonzero_features/num_features);
-normalization_method = 1; %normalization method for generating the data (Xs)
+model_params   = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, 'P_zero', 0.4);
+normalization_method = 1; %normalization method for generating the data (NOT USED HERE)
 sparse_options = struct('damp',0.5, 'damp_decay',1, 'robust_updates',2, 'verbosity',0, 'max_iter',100, 'threshold',1e-5, 'min_site_prec',1e-6);
 sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2,'p_u', model_params.P_user);
 sparse_params.rho = model_params.P_zero;
@@ -35,13 +29,12 @@ sparse_params.rho = model_params.P_zero;
 METHODS_ALL = {
      'False',  'Max(90% UCB,90% LCB)'; 
      'True',  'Uniformly random';
-     'True', 'random on the relevelant features';
+     'False', 'random on the relevelant features';
      'True', 'max variance';
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
      'False',  'Expected information gain (post_pred)'
-     'True', 'Expected information gain (post_pred), fast approx'
      };
 Method_list = [];
 for m = 1:size(METHODS_ALL,1)
@@ -60,20 +53,16 @@ decisions = zeros(num_methods, num_iterations, num_runs);
 tic
 for run = 1:num_runs 
     disp(['run number ', num2str(run), ' from ', num2str(num_runs), '. acc time = ', num2str(toc) ]);
-    %% create the simulated data
-    %Theta_star is the true value of the unknown weight vector
-    % non-zero elements of theta_star are generated based on the model parameters
-    theta_star = model_params.Nu_theta*randn( num_nonzero_features, 1);
-    theta_star = [theta_star; zeros(num_features-num_nonzero_features,1)]; % make it sparse
-    z_star = theta_star ~= 0; % the true value for the latent variable Z in spike and slab model
-    %generate new data for each run (because the results is sensitive to the covariate values)
-    X_all   = generate_data(num_data,num_features, normalization_method);
-    X_train = X_all(1:num_trainingdata,:)'; % select a subset of data as training data
-    X_test  = X_all(num_trainingdata+1:num_data,:)'; % the rest are the test data
-    Y_train = normrnd(X_train'*theta_star, model_params.Nu_y); % calculate drug responses of the training data
-    %Tomi suggested that it makes more sense to use Y_test instead of X_test'*theta_star in the loss functions
-    Y_test  = normrnd(X_test'*theta_star, model_params.Nu_y); % calculate drug responses of the test data
-    %% main algorithm
+    %% divide data into test and train
+    test_indices  = unique(ceil(num_data*rand(num_test,1)));
+    X_test        = X_all(test_indices,:)'; % the selected testn data
+    Y_test        = Y_all(test_indices);
+    
+    X_train       = X_all';
+    X_train(:,test_indices) = [];% remaining data as training data
+    Y_train       = Y_all;
+    Y_train(test_indices) = [];
+
     for method_num = 1:num_methods
         method_name = Method_list(method_num);
         %Feedback = values (1st column) and indices (2nd column) of user feedback
