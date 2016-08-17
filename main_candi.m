@@ -19,7 +19,7 @@ theta_star = zeros(num_features,1);  %we do not have theta_star here, I just set
 num_nonzero_features = 10; % features that are nonzero (NOT USED HERE)
 
 %model parameters
-model_params   = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, 'P_zero', 0.4);
+model_params   = struct('Nu_y',0.5, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, 'P_zero', 0.2);
 normalization_method = 1; %normalization method for generating the data (NOT USED HERE)
 sparse_options = struct('damp',0.5, 'damp_decay',1, 'robust_updates',2, 'verbosity',0, 'max_iter',100, 'threshold',1e-5, 'min_site_prec',1e-6);
 sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2,'p_u', model_params.P_user);
@@ -35,6 +35,7 @@ METHODS_ALL = {
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
      'False',  'Expected information gain (post_pred)'
+     'False', 'Expected information gain (post_pred), fast approx'
      };
 Method_list = [];
 for m = 1:size(METHODS_ALL,1)

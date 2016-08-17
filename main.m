@@ -11,7 +11,6 @@ MODE                     = 2;
 %           2: Feedback on relevance of features. Model: spike and slab prior
 
 DATA_SOURCE = 'SIMULATION_DATA'; %use simulated data
-% DATA_SOURCE = 'GDSC_DATA'; %Genomics of Drug Sensitivity in Cancer (GDSC)(not working)
 
 %data parameters for SIMULATION_DATA
 num_features         = 100; % total number of features
