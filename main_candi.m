@@ -5,22 +5,22 @@ clear all
 MODE = 2; 
 %The following line loads X_all, Y_all, and z_star
 load('CanDI_text_data\candi_data');
+
 num_features = size(X_all,2);
 num_data     = size(X_all,1);
-num_folds    = num_data;  % number of clusters
+num_folds    = 20;  % number of clusters
 num_trainingdata    = num_data- floor(num_data/num_folds);
 %Algorithm parameters
 num_iterations   = 20; %total number of user feedback
 
 
 %things that have not been used (since we do not simulate the data
-theta_star = zeros(num_features,1);  %(NOT USED HERE)
+theta_star = zeros(num_features,1);  % (NOT USED HERE)
 num_nonzero_features            = 0; % (NOT USED HERE)
 normalization_method            = 0; % (NOT USED HERE)
 
 %model parameters
-model_params   = struct('Nu_y',0.5, 'Nu_theta', 0.1, 'Nu_user', 0.1, 'P_user', 0.7, 'P_zero', 0.5);
-
+model_params   = struct('Nu_y',0.4, 'Nu_theta', 0.1, 'Nu_user', 0.1, 'P_user', 0.9, 'P_zero', 0.5);
 sparse_options = struct('damp',0.5, 'damp_decay',1, 'robust_updates',2, 'verbosity',0, 'max_iter',100, 'threshold',1e-5, 'min_site_prec',1e-6);
 sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2,'p_u', model_params.P_user);
 sparse_params.rho = model_params.P_zero;
@@ -58,16 +58,22 @@ K_fold_indices = crossvalind('Kfold', num_data, num_folds);
 
 for fold = 1:num_folds 
     disp([' fold number ', num2str(fold), ' from ', num2str(num_folds), '. acc time = ', num2str(toc) ]);
-    %% k = run, divide data into training and tes 
-
+    %% divide data into training and test data in k clusters 
     test_indices = (K_fold_indices == fold);
     X_test        = X_all(test_indices,:)'; 
-    Y_test        = Y_all(test_indices);
+    Y_test        = Y_all(test_indices);   
+    train_indices = ~test_indices;
+    X_train       = X_all(train_indices,:)';
+    Y_train       = Y_all(train_indices,:);
+    %% normalize the data 
+    y_mean = mean(Y_train);
+    y_std  = std(Y_train);  
+    Y_train = (Y_train - y_mean)./y_std;
+    Y_test = (Y_test - y_mean)./y_std; 
+    x_mean  = mean(X_train,2);
+    X_train = bsxfun(@minus,X_train,x_mean);
+    X_test  = bsxfun(@minus,X_test,x_mean);
     
-    train_indeces = ~test_indices;
-    X_train       = X_all(train_indeces,:)';
-    Y_train       = Y_all(train_indeces,:);
-
     for method_num = 1:num_methods
         method_name = Method_list(method_num);
         %Feedback = values (1st column) and indices (2nd column) of user feedback
