@@ -4,7 +4,7 @@ clear all
 %% Parameters
 MODE = 2; 
 %The following line loads X_all, Y_all, and z_star
-load('CanDI_text_data\candi_data');
+load('DATA_CanDI_text_data\candi_data');
 
 num_features = size(X_all,2);
 num_data     = size(X_all,1);

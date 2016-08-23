@@ -4,11 +4,11 @@ clear all
 %% Parameters and Simulator setup 
 MODE                     = 2; 
 
-load('CanDI_text_data\candi_data');
+load('DATA_CanDI_text_data\candi_data');
 %data parameters
 num_features             = size(X_all,2); 
 num_data                 = size(X_all,1);
-num_trainingdata         = 2:1:num_data-1; 
+num_trainingdata         = 10:5:num_data-1; 
 
 %things that have not been used (since we do not simulate the data
 theta_star = zeros(num_features,1);  % (NOT USED HERE)
@@ -78,7 +78,17 @@ for n_f = 1:size(num_features,2);
             x_mean  = mean(X_train,2);
             X_train = bsxfun(@minus,X_train,x_mean);
             X_test  = bsxfun(@minus,X_test,x_mean);
-            
+
+            %% remove all-zero features
+            % TODO: a more elegant way to do this is to not change the training 
+            % data but to change the decision making algorithm in a way that it
+            % will not ask about dimensions with no information. Or maybe
+            % we can tune the algorithm in a way that the prior information
+            % is less informative than the likelihood, therefore, the
+            % algorithm will not ask about all-zero features.
+            non_zero_features =  (sum((X_train == 0),2)==0);
+            X_train    = X_train(non_zero_features,:);
+            z_star_new = z_star(non_zero_features);
             %% main algorithm
             for method_num = 1:num_methods
                 method_name = Method_list(method_num);
@@ -89,22 +99,24 @@ for n_f = 1:size(num_features,2);
                     posterior = calculate_posterior(X_train, Y_train, Feedback, model_params, MODE, sparse_params, sparse_options);
                     sparse_options.si = posterior.si;
                     %% calculate different loss functions
-                    Loss_1(method_num, it, run, n_f ,n_t) = mean((X_test'*posterior.mean- Y_test).^2);
+                    new_posterior_mean = zeros(num_features(n_f),1);
+                    new_posterior_mean(non_zero_features) = posterior.mean;
+                    Loss_1(method_num, it, run, n_f ,n_t) = mean((X_test'*new_posterior_mean- Y_test).^2);
 %                     Loss_2(method_num, it, run, n_f ,n_t) = mean((posterior.mean-theta_star).^2); % (NOT USED HERE)
-                    %log of posterior predictive dist as the loss function 
-                    %for test data
-                    post_pred_var = diag(X_test'*posterior.sigma*X_test) + model_params.Nu_y^2;
-                    log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_test'*posterior.mean - Y_test).^2)./(2*post_pred_var);
-                    Loss_3(method_num, it, run, n_f ,n_t) =  mean(log_post_pred);
-                    %for training data
-                    post_pred_var = diag(X_train'*posterior.sigma*X_train) + model_params.Nu_y^2;
-                    log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train'*posterior.mean - Y_train).^2)./(2*post_pred_var);
-                    Loss_4(method_num, it, run, n_f ,n_t) = mean(log_post_pred);
+%                     %log of posterior predictive dist as the loss function 
+%                     %for test data
+%                     post_pred_var = diag(X_test'*posterior.sigma*X_test) + model_params.Nu_y^2;
+%                     log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_test'*posterior.mean - Y_test).^2)./(2*post_pred_var);
+%                     Loss_3(method_num, it, run, n_f ,n_t) =  mean(log_post_pred);
+%                     %for training data
+%                     post_pred_var = diag(X_train'*posterior.sigma*X_train) + model_params.Nu_y^2;
+%                     log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train'*posterior.mean - Y_train).^2)./(2*post_pred_var);
+%                     Loss_4(method_num, it, run, n_f ,n_t) = mean(log_post_pred);
                     %% make decisions based on a decision policy
                     feature_index = decision_policy(posterior, method_name, num_nonzero_features, X_train, Y_train, Feedback, model_params, MODE, sparse_params, sparse_options);
                     decisions(method_num, it, run, n_f ,n_t) = feature_index;
                     %simulate user feedback
-                    new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
+                    new_fb_value = user_feedback(feature_index, theta_star, z_star_new, MODE, model_params);
                     Feedback = [Feedback; new_fb_value , feature_index];
                 end
             end
