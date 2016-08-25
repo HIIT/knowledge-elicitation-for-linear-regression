@@ -115,4 +115,7 @@ for i=1:num_features
    end
 end
 
-% save('z_star','z_star');
+%% TODO: for now we create z_star heuristically
+
+z_star = P_gamma>0.09;
+save('z_star','z_star');
