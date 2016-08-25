@@ -90,10 +90,12 @@ mean_ridge = ((1 / sparse_params.sigma2) * (X_all_new' * X_all_new) + (1 / spars
 figure
 subplot(1, 2, 1);
 plot(mean_ss,'or');
+title('Spike and slab model');
 xlabel('keywords');
 ylabel('mean of posterior weights')
 subplot(1, 2, 2);
 plot(mean_ridge,'ob');
+title('Ridge regression model');
 xlabel('keywords');
 ylabel('mean of posterior weights')
 
