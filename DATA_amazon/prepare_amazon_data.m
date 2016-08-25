@@ -1,9 +1,9 @@
 clear all
 
 
-load('amazon_data.mat');
+load('amazon_data_raw.mat');
 %it gives us X_all_raw, Y_all, keywords_all
-appearance_threshold = 20;
+appearance_threshold = 100;
 
 num_data     = size(X_all_raw,1);
 num_orig_dim = size(X_all_raw,2);
