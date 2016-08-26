@@ -126,7 +126,7 @@ sparse_params = sparse_params_s{min_i};
 %for spike-slab
 [fa, si, converged] = linreg_sns_ep(Y_all_new, X_all_new, sparse_params, sparse_options);
 if converged ~= 1
-    disp(['linreg_sns_ep did not converge for the current set of params ']);
+    disp('linreg_sns_ep did not converge for the current set of params ');
 end
 mean_ss    = fa.w.Mean;
 P_gamma    = fa.P_gamma;
@@ -161,7 +161,6 @@ for i=1:num_features
    end
 end
 
-%% TODO: for now we create z_star heuristically
-
-z_star = P_gamma>0.09;
-save('z_star','z_star');
+%% Save all the important parameters based on cross-validation and the solution on all data
+theta_star = mean_ss;
+save('cv_results','P_gamma','theta_star','sparse_params');
