@@ -14,12 +14,13 @@ decision_threshold = 0.9; %this should be on [0,1).
 z_star = P_gamma>decision_threshold;
 
 %data parameters
-num_features = size(X_all,2);
-num_data     = size(X_all,1);
-num_folds    = 50;  % number of partitions
-num_trainingdata    = num_data- floor(num_data/num_folds);
+num_features       = size(X_all,2);
+num_data           = size(X_all,1);
+num_trainingdata   = 500;
+
 %simulation parameters
-num_iterations   = 700; %total number of user feedback
+num_iterations   = 100; %total number of user feedback
+num_runs         = 50;
 
 %things that have not been used (since we do not simulate the data)
 num_nonzero_features  = -1; % (NOT USED HERE)
@@ -52,24 +53,25 @@ for m = 1:size(METHODS_ALL,1)
 end
 num_methods = size(Method_list,2); %number of decision making methods that we want to consider
 %% Main algorithm
-Loss_1 = zeros(num_methods, num_iterations, num_folds);
-Loss_2 = zeros(num_methods, num_iterations, num_folds);
-Loss_3 = zeros(num_methods, num_iterations, num_folds);
-Loss_4 = zeros(num_methods, num_iterations, num_folds);
+Loss_1 = zeros(num_methods, num_iterations, num_runs);
+Loss_2 = zeros(num_methods, num_iterations, num_runs);
+Loss_3 = zeros(num_methods, num_iterations, num_runs);
+Loss_4 = zeros(num_methods, num_iterations, num_runs);
 
-decisions = zeros(num_methods, num_iterations, num_folds); 
+decisions = zeros(num_methods, num_iterations, num_runs); 
 tic
 
-%divide data in k_fold clusters
-K_fold_indices = crossvalind('Kfold', num_data, num_folds);
-
-for fold = 1:num_folds 
-    disp([' fold number ', num2str(fold), ' from ', num2str(num_folds), '. acc time = ', num2str(toc) ]);
-    %% divide data into training and test data in k clusters 
-    test_indices = (K_fold_indices == fold);
+for run = 1:num_runs
+    disp(['run number ', num2str(run), ' from ', num2str(num_runs), '. acc time = ', num2str(toc) ]);
+    %% divide data into training and test
+    %randomly select the training data
+    train_indices  = false(num_data,1);
+    selected_train = datasample(1:num_data,num_trainingdata,'Replace',false);
+    train_indices(selected_train) = true;
+    test_indices  = ~train_indices;
+    
     X_test        = X_all(test_indices,:)'; 
     Y_test        = Y_all(test_indices);   
-    train_indices = ~test_indices;
     X_train       = X_all(train_indices,:)';
     Y_train       = Y_all(train_indices,:);
     %% normalize the data 
@@ -95,19 +97,19 @@ for fold = 1:num_folds
             % transform predictions back to the original scale
             yhat = X_test'*posterior.mean;
             yhat = yhat .* y_std + y_mean; 
-            Loss_1(method_num, it, fold) = mean((yhat - Y_test).^2);
-            Loss_2(method_num, it, fold) = mean((posterior.mean-theta_star).^2);     
+            Loss_1(method_num, it, run) = mean((yhat - Y_test).^2);
+            Loss_2(method_num, it, run) = mean((posterior.mean-theta_star).^2);     
             %log of posterior predictive dist as the loss function for test data
             post_pred_var = diag(X_test'*posterior.sigma*X_test) + model_params.Nu_y^2;
             log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((yhat - Y_test).^2)./(2*post_pred_var);
-            Loss_3(method_num, it, fold) =  mean(log_post_pred);
+            Loss_3(method_num, it, run) =  mean(log_post_pred);
             %log of posterior predictive dist as the loss function for training data
             post_pred_var = diag(X_train'*posterior.sigma*X_train) + model_params.Nu_y^2;
             log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train'*posterior.mean - Y_train).^2)./(2*post_pred_var);
-            Loss_4(method_num, it, fold) = mean(log_post_pred);
+            Loss_4(method_num, it, run) = mean(log_post_pred);
             %% make decisions based on a decision policy
             feature_index = decision_policy(posterior, method_name, num_nonzero_features, X_train, Y_train, Feedback, model_params, MODE, sparse_params, sparse_options);
-            decisions(method_num, it, fold) = feature_index;
+            decisions(method_num, it, run) = feature_index;
             %simulate user feedback
             new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
             Feedback = [Feedback; new_fb_value , feature_index];
