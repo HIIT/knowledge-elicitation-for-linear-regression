@@ -1,18 +1,18 @@
-This folder creates the data necessary for simulation using the Amazon data used in
+This folder creates the data necessary for simulation using the Amazon data used in:
 "Hernández-Lobato, et.al. (2015). Expectation propagation in linear regression models
 with spike-and-slab priors. Machine Learning, 99(3), 437-487."
 
 There are three scripts:
-  extract_amazon_data.m: read the review files and prepares the bag of words of the
-  full data and extracts the response values.
+  extract_amazon_data.m: reads the review file, prepares the bag of words of the
+  full data, and extracts the response values.
   
-  prepare_amazon_data.m: This script removes keywords with less than 100 times occurrence
+  prepare_amazon_data.m: This script removes keywords with less than 100 occurrence
   in the reviews (as suggested by the paper)
   
   learn_z_star.m: this script first performs cross validation on the data to learn good
   parameters for Spike-and-Slab linear regression. After that, it uses the best parameters
-  to fit a model to the data. The output is a somehow ground truth of data. A visualization
-  of the results can be found in the fig folder.
+  to fit a model to the data. The output is can be used as some kind of a ground truth of
+  data. A visualization of the results can be found in the fig folder.
 
 
 
