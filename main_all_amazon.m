@@ -9,14 +9,18 @@ load('DATA_amazon\amazon_data');
 %The following line loads sparse parameters learned by CV and also theta_star 
 % and P_gamma leaned by using all the data.
 load('DATA_amazon\cv_results');
-% define z_star in a meaningful way
-decision_threshold = 0.9; %this should be on [0,1). 
-z_star = P_gamma>decision_threshold;
 
 %data parameters
 num_features             = size(X_all,2); 
 num_data                 = size(X_all,1);
 num_trainingdata         = 300:100:2000; 
+
+% define z_star in a meaningful way
+decision_threshold = 0.9; %this should be on [0,1). 
+z_star = zeros(num_features,1);
+z_star(P_gamma>=decision_threshold) = 1;  %relevant features
+z_star(P_gamma<=1-decision_threshold) = 0; %non-relevant features 
+z_star(P_gamma<decision_threshold & P_gamma>1-decision_threshold) = -1; %"don't know" features 
 
 %things that have not been used (since we do not simulate the data)
 normalization_method            = -1; % (NOT USED HERE)

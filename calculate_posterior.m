@@ -21,6 +21,7 @@ function [ posterior ] = calculate_posterior(X, Y, feedback, model_params, MODE,
         posterior.mean  = fa.w.Mean;        
         
     end
+    
     if MODE == 0
         %calculate the analytical solution for posterior with Gaussian prior
         num_features = size(X,1);
@@ -46,15 +47,19 @@ function [ posterior ] = calculate_posterior(X, Y, feedback, model_params, MODE,
 
         posterior.sigma = inv(sigma_inverse);
         posterior.mean  = posterior.sigma * ( (1/model_params.Nu_y)^2 * X'*Y + temp );
-    end
-    %TODO: this posterior.si is required for the sparse case. fix the function interfaces later and remove this line
-    posterior.si = [];
-    
+        %TODO: this posterior.si is required for the sparse case. fix the function interfaces later and remove this line
+        posterior.si = [];
+    end  
     
     if MODE == 2        
         %assume sparse prior (spike and slab) and approximate the posterior with EP
         %weights are approximated by a multivariate Gaussian distribution.
         %latent variables are approximated by Bernoulli distribution. 
+        if ~isempty(feedback)
+            %remove the feedback that the user said "don't know"
+            dont_know_fb = feedback(:,1)==-1;
+            feedback(dont_know_fb,:) = [];
+        end
         [fa, si, converged] = linreg_sns_ep(Y, X', sparse_params, sparse_options, [] , feedback, sparse_options.si);
         if converged ~= 1
             disp(['linreg_sns_ep did not converge for MODE = ', num2str(MODE)])

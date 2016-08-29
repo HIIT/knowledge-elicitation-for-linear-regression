@@ -11,7 +11,14 @@ function [ feedback_value ] = user_feedback(feature_index, theta_star, z_star, M
         feedback_value = normrnd(theta_star(feature_index),model_params.Nu_user);
     end
     if MODE == 2
-        %user feedback is on relevance of the weight value
+        %user feedback is on the relevance of the weight value
+        %In some cases the user may not know the relevance (too much
+        %uncertainty). Use -1 to represent "don't know" responses.
+        if z_star(feature_index) == -1
+            feedback_value = -1;
+            return
+        end
+        
         f_is_correct = binornd(1,model_params.P_user);
         if f_is_correct == 1
             feedback_value = z_star(feature_index);
