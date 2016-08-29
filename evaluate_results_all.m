@@ -14,7 +14,8 @@ num_runs = size(decisions,3);
 
 %display useful information about the simulation
 disp(struct2table(model_params));
-disp(['Number of non-zero features: ', num2str(max_num_nonzero_features),'.']);
+disp(['Number of "relevant" features: ', num2str(sum(z_star==1)),'.']);
+disp(['Number of "do not know" features: ', num2str(sum(z_star==-1)),'.']);
 if size(num_trainingdata,2) == 1
     disp(['The number of training data is fixed to ', num2str(num_trainingdata) ,'. (runs over dimensions).']);
 end

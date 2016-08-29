@@ -94,7 +94,7 @@ for run = 1:num_runs
             log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train'*posterior.mean - Y_train).^2)./(2*post_pred_var);
             Loss_4(method_num, it, run) = mean(log_post_pred);
             %% make decisions based on a decision policy
-            feature_index = decision_policy(posterior, method_name, num_nonzero_features, X_train, Y_train, Feedback, model_params, MODE, sparse_params, sparse_options);
+            feature_index = decision_policy(posterior, method_name, z_star, X_train, Y_train, Feedback, model_params, MODE, sparse_params, sparse_options);
             decisions(method_num, it, run) = feature_index;
             %simulate user feedback
             new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
@@ -105,5 +105,5 @@ end
 % profile off
 %% averaging and plotting
 save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'model_params', ...
-    'num_nonzero_features', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method')
+    'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method')
 evaluate_results

@@ -23,11 +23,10 @@ z_star(P_gamma<=1-decision_threshold) = 0; %non-relevant features
 z_star(P_gamma<decision_threshold & P_gamma>1-decision_threshold) = -1; %"don't know" features 
 
 %simulation parameters
-num_iterations   = 100; %total number of user feedback
-num_runs         = 50;
+num_iterations   = 10; %total number of user feedback
+num_runs         = 4;
 
 %things that have not been used (since we do not simulate the data)
-num_nonzero_features  = -1; % (NOT USED HERE)
 normalization_method  = -1; % (NOT USED HERE)
 
 %model parameters based on CV results
@@ -41,7 +40,7 @@ sparse_params.eta2 = -1;   % (NOT USED HERE)
 METHODS_ALL = {
      'False',  'Max(90% UCB,90% LCB)'; 
      'True',  'Uniformly random';
-     'False', 'random on the relevelant features';
+     'True', 'random on the relevelant features';
      'True', 'max variance';
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
@@ -112,7 +111,7 @@ for run = 1:num_runs
             log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((X_train'*posterior.mean - Y_train).^2)./(2*post_pred_var);
             Loss_4(method_num, it, run) = mean(log_post_pred);
             %% make decisions based on a decision policy
-            feature_index = decision_policy(posterior, method_name, num_nonzero_features, X_train, Y_train, Feedback, model_params, MODE, sparse_params, sparse_options);
+            feature_index = decision_policy(posterior, method_name, z_star, X_train, Y_train, Feedback, model_params, MODE, sparse_params, sparse_options);
             decisions(method_num, it, run) = feature_index;
             %simulate user feedback
             new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
@@ -123,5 +122,5 @@ end
 % profile off
 %% averaging and plotting
 save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'model_params', ...
-    'num_nonzero_features', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method')
+    'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method')
 evaluate_results
