@@ -7,4 +7,6 @@
 7. Add comparisons to previous non-sparse methods we considered.
 8. Other product category (for instance, amazon books reviews). 
 9. Other datasets (still sparse, still easy to interpret). Some possibilities: hotel ratings (Tripadvisor), Rate-My-Professor.
+10. Usinf the tf-idf instead of the count matrix. Then again removing some of the features. Does the performance of our method improve?
+
 
