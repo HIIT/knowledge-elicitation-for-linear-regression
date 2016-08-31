@@ -13,18 +13,18 @@ load('DATA_amazon\cv_results');
 %data parameters
 num_features       = size(X_all,2);
 num_data           = size(X_all,1);
-num_trainingdata   = 500;
+num_trainingdata   = 30;
 
-% define z_star in a meaningful way
-decision_threshold = 0.9; %this should be on [0,1). 
+% define z_star in a meaningful way (either by ground truth or expert opinion)
+decision_threshold = 0.9; %this should be on [0.5,1). 
 z_star = zeros(num_features,1);
 z_star(P_gamma>=decision_threshold) = 1;  %relevant features
 z_star(P_gamma<=1-decision_threshold) = 0; %non-relevant features 
 z_star(P_gamma<decision_threshold & P_gamma>1-decision_threshold) = -1; %"don't know" features 
 
 %simulation parameters
-num_iterations   = 10; %total number of user feedback
-num_runs         = 4;
+num_iterations   = 200; %total number of user feedback
+num_runs         = 100;
 
 %things that have not been used (since we do not simulate the data)
 normalization_method  = -1; % (NOT USED HERE)
@@ -34,7 +34,7 @@ model_params   = struct('Nu_y',sqrt(sparse_params.sigma2), 'Nu_theta', sqrt(spar
 sparse_options = struct('damp',0.8, 'damp_decay',0.95, 'robust_updates',2, 'verbosity',0, 'max_iter',1000, 'threshold',1e-5, 'min_site_prec',1e-6);
 % sparse_params  = struct('sigma2',1, 'tau2', 0.1^2 ,'p_u', model_params.P_user,'rho', 0.3 );
 sparse_params.p_u = model_params.P_user;
-sparse_params.eta2 = -1;   % (NOT USED HERE)   
+sparse_params.eta2 = -1;   % (NOT USED IN MODE=2)   
 %% METHOD LIST
 % Set the desirable methods to 'True' and others to 'False'. only the 'True' methods will be considered in the simulation
 METHODS_ALL = {
@@ -82,7 +82,9 @@ for run = 1:num_runs
     y_std   = std(Y_train);  
     Y_train = (Y_train - y_mean)./y_std;
     x_mean  = mean(X_train,2);
-    x_std   = std(X_train')';
+    x_std   = std(X_train')'; 
+    %some of the x_stds can be zero if training size is small. don't divide the data by std if std==0
+    x_std(x_std==0) = 1;
     X_train = bsxfun(@minus,X_train,x_mean);
     X_train = bsxfun(@rdivide, X_train, x_std);
     X_test  = bsxfun(@minus,X_test,x_mean);
