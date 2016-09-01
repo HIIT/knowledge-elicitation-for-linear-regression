@@ -5,6 +5,7 @@ function [ feedback_value ] = user_feedback(feature_index, theta_star, z_star, M
 % feature_index   index of the feature that receives feedback
 % theta_star      true weight values
 % z_star          true values for the latent variable in spike and slab model
+% simulation      true: the user has been generated, false: real data 
 
     if MODE == 0 || MODE == 1
         %user feedback is a noisy observation of the weight value
@@ -18,12 +19,18 @@ function [ feedback_value ] = user_feedback(feature_index, theta_star, z_star, M
             feedback_value = -1;
             return
         end
-        
-        f_is_correct = binornd(1,model_params.P_user);
-        if f_is_correct == 1
-            feedback_value = z_star(feature_index);
+        %in case we are using simulated data then use the model parameters
+        if model_params.simulated_data
+            f_is_correct = binornd(1,model_params.P_user);
+            if f_is_correct == 1
+                feedback_value = z_star(feature_index);
+            else
+                feedback_value = ~z_star(feature_index);
+            end
         else
-            feedback_value = ~z_star(feature_index);
+            %if we are using real data, use the user feedback (do not add
+            %the model noise since data has noise itself)
+            feedback_value = z_star(feature_index);
         end
     end
 
