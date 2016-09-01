@@ -18,7 +18,8 @@ function [ posterior ] = calculate_posterior(X, Y, feedback, model_params, MODE,
         end
         posterior.si = si;
         posterior.sigma = inv(fa.w.Tau);
-        posterior.mean  = fa.w.Mean;        
+        posterior.mean  = fa.w.Mean;
+        posterior.p   = fa.gamma.p;
         
     end
     
@@ -49,6 +50,7 @@ function [ posterior ] = calculate_posterior(X, Y, feedback, model_params, MODE,
         posterior.mean  = posterior.sigma * ( (1/model_params.Nu_y)^2 * X'*Y + temp );
         %TODO: this posterior.si is required for the sparse case. fix the function interfaces later and remove this line
         posterior.si = [];
+        posterior.p  = []; 
     end  
     
     if MODE == 2        
@@ -69,7 +71,7 @@ function [ posterior ] = calculate_posterior(X, Y, feedback, model_params, MODE,
         %posterior.sigma = inv(fa.w.Tau);
         posterior.sigma = fa.w.Tau_chol' \ (fa.w.Tau_chol \ eye(size(fa.w.Tau_chol))); % this should be faster than inv?
         posterior.mean  = fa.w.Mean;       
-        posterior.p   = fa.gamma.p;
+        posterior.p     = fa.gamma.p;
         
         
     end
