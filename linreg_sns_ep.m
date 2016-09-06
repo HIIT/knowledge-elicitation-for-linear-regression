@@ -4,12 +4,16 @@ function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, w_feedbacks, gamma_fe
 %    p(f_w_j|w_j,eta2) = N(f_w_j|w_j, eta2)
 %    p(f_gamma_j|gamma_j) = I(gamma_j=1) Bernoulli(f_gamma_j|p_u) + I(gamma_j=0) Bernoulli(f_gamma_j|1-p_u)
 % -- Prior:
-% p(w_j|gamma_j=1) = Normal(w_j|0, tau2)
-% p(w_j|gamma_j=0) = delta(w_j)
-% p(gamma_j|rho) = Bernoulli(gamma_j|rho)
+%    p(w_j|gamma_j=1) = Normal(w_j|0, tau2)
+%    p(w_j|gamma_j=0) = delta(w_j)
+%    p(gamma_j|rho) = Bernoulli(gamma_j|rho)
+%    p(sigma2^-1) = Gamma(sigma2^-1|a,b) or fixed sigma2
 % -- Approximation;
-% q(w) = Normal(w|Mean_w, Var_w), Var_w = Tau_w^-1
-% q(gamma) = \prod Bernoulli(\gamma_j|p_gamma_j)
+%    q(w) = Normal(w|Mean_w, Var_w), Var_w = Tau_w^-1
+%    q(gamma) = \prod Bernoulli(gamma_j|p_gamma_j)
+%    q(sigma2^-1) = Gamma(sigma2^-1|a,b)
+%
+%    sigma2 is updated using VB (if not fixed), other terms using EP.
 %
 % Inputs:
 % y                target values (n x 1)
@@ -39,6 +43,9 @@ pr.n = n;
 pr.m = m;
 pr.rho_nat = log(pr.rho) - log1p(-pr.rho);
 pr.p_u_nat = log(pr.p_u) - log1p(-pr.p_u);
+pr.yy = y' * y; % precompute
+pr.xy = x' * y; % precompute
+pr.xx = x' * x; % precompute
 n_w_feedbacks = size(w_feedbacks, 1);
 n_gamma_feedbacks = size(gamma_feedbacks, 1);
 
@@ -56,8 +63,19 @@ if n_w_feedbacks > 0
         F_f(w_feedbacks(i, 2)) = w_feedbacks(i, 1);
     end
 end
-si.lik.w.Tau = (1 / pr.sigma2) * (x' * x) + (1 / pr.eta2) * S_f;
-si.lik.w.Mu = (1 / pr.sigma2) * x' * y + (1 / pr.eta2) * F_f;
+si.wf.w.Tau = (1 / pr.eta2) * S_f;
+si.wf.w.Mu = (1 / pr.eta2) * F_f;
+if isfield(pr, 'sigma2_prior') && pr.sigma2_prior
+    si.lik.sigma2.a = 0.5 * n;
+    si.lik.sigma2.b = 0.5 * pr.yy;
+    sigma2_imean = (pr.sigma2_a + si.lik.sigma2.a) / (pr.sigma2_b + si.lik.sigma2.b);
+    si.lik.w.Tau = sigma2_imean * pr.xx;
+    si.lik.w.Mu = sigma2_imean * pr.xy;
+else
+    si.lik.w.Tau = (1 / pr.sigma2) * pr.xx;
+    si.lik.w.Mu = (1 / pr.sigma2) * pr.xy;
+    pr.sigma2_prior = 0;
+end
 si.gf.gamma.p_nat = zeros(m, 1);
 
 
@@ -80,11 +98,28 @@ for iter = 1:op.max_iter
     % site updates
     si.prior = update_w_prior_sites(si.prior, ca_prior, ti_prior, op);
     
-    %% full approx update
-    fa = compute_full_approximation(si, pr);
+    % full approx update
+    fa = compute_full_approximation_w(fa, si, pr);
+    fa = compute_full_approximation_gamma(fa, si, pr);
+
+    %% sigma2 and (the associated) likelihood VB update
+    if pr.sigma2_prior
+        % sigma2 update
+        tr_tmp = x / fa.w.Tau_chol';
+        si.lik.sigma2.b = 0.5 * (pr.yy - 2 * (fa.w.Mean' * pr.xy) + tr_tmp(:)' * tr_tmp(:) + fa.w.Mean' * pr.xx * fa.w.Mean);
+
+        fa = compute_full_approximation_sigma2(fa, si, pr);
+
+        % likelihood update
+        si.lik.w.Tau = fa.sigma2.imean * pr.xx;
+        si.lik.w.Mu = fa.sigma2.imean * pr.xy;
+
+        % full approx update
+        fa = compute_full_approximation_w(fa, si, pr);
+    end
     
+    %% gamma feedback updates
     if n_gamma_feedbacks > 0
-        %% gamma feedback updates
         % cavity
         ca_gf = compute_gf_cavity(fa, si.gf);
 
@@ -94,7 +129,7 @@ for iter = 1:op.max_iter
         % site updates
         si.gf = update_gf_sites(si.gf, ca_gf, ti_gf, gamma_feedbacks, op);
 
-        %% full approx update (update only gamma part as only those sites have been updated)
+        % full approx update (update only gamma part as only those sites have been updated)
         fa = compute_full_approximation_gamma(fa, si, pr);
     end
 
@@ -217,6 +252,16 @@ function fa = compute_full_approximation(si, pr)
 fa = struct;
 fa = compute_full_approximation_w(fa, si, pr);
 fa = compute_full_approximation_gamma(fa, si, pr);
+if pr.sigma2_prior
+    fa = compute_full_approximation_sigma2(fa, si, pr);
+end
+
+end
+
+
+function fa = compute_full_approximation_sigma2(fa, si, pr)
+
+fa.sigma2.imean = (pr.sigma2_a + si.lik.sigma2.a) / (pr.sigma2_b + si.lik.sigma2.b); % note: approx is for sigma2^-1
 
 end
 
@@ -224,9 +269,9 @@ end
 function fa = compute_full_approximation_w(fa, si, pr)
 
 % m x m and m x 1
-fa.w.Tau = si.lik.w.Tau + diag(si.prior.w.tau);
+fa.w.Tau = si.lik.w.Tau + si.wf.w.Tau + diag(si.prior.w.tau);
 fa.w.Tau_chol = chol(fa.w.Tau, 'lower');
-fa.w.Mu = si.lik.w.Mu + si.prior.w.mu;
+fa.w.Mu = si.lik.w.Mu + si.wf.w.Mu + si.prior.w.mu;
 fa.w.Mean = fa.w.Tau_chol' \ (fa.w.Tau_chol \ fa.w.Mu);
 
 end
