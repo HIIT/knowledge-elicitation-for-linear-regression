@@ -126,7 +126,7 @@ for iter = 1:op.max_iter
         
         % EP
         cav_nat = fa.gamma.p_nat - si.prior.gamma.rho_nat;
-        cav_a_m_cav_nat = (fa.rho.a - si.prior.rho.a - 1 + eps) .* cav_nat;
+        cav_a_m_cav_nat = (fa.rho.a - si.prior.rho.a - 1 + eps) .* exp(cav_nat);
         cav_b = fa.rho.b - si.prior.rho.b - 1 + eps;
         ti_mean = cav_a_m_cav_nat ./ (cav_a_m_cav_nat + cav_b);
         ti_mean = max(min(ti_mean, 1-eps), eps);
