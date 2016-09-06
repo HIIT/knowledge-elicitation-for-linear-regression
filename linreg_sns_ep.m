@@ -41,7 +41,6 @@ end
 [n, m] = size(x);
 pr.n = n;
 pr.m = m;
-pr.rho_nat = log(pr.rho) - log1p(-pr.rho);
 pr.p_u_nat = log(pr.p_u) - log1p(-pr.p_u);
 pr.yy = y' * y; % precompute
 pr.xy = x' * y; % precompute
@@ -78,6 +77,19 @@ else
 end
 si.gf.gamma.p_nat = zeros(m, 1);
 
+if isfield(pr, 'rho_prior') && pr.rho_prior
+    rho_ = pr.rho_a / (pr.rho_a + pr.rho_b);
+    si.prior.gamma.rho_nat = log(rho_) - log1p(-rho_);
+    si.prior.rho.a = zeros(m, 1);
+    si.prior.rho.b = zeros(m, 1);
+else
+    si.prior.gamma.rho_nat = log(pr.rho) - log1p(-pr.rho);
+    pr.rho_prior = 0;
+end
+
+% TODO: name the si terms better (according to the terms that they
+% approximate, e.g., si.gamma_g_rho.rho_nat, which would be the rho site of
+% p(gamma|rho) term. Drop prior/lik as unnecessary?
 
 % full approximation
 fa = compute_full_approximation(si, pr);
@@ -102,6 +114,28 @@ for iter = 1:op.max_iter
     fa = compute_full_approximation_w(fa, si, pr);
     fa = compute_full_approximation_gamma(fa, si, pr);
 
+    %% gamma prior updates, EP for gamma, VB for rho
+    if pr.rho_prior
+        % VB
+        si.prior.rho.a = (1 - op.damp) * si.prior.rho.a + op.damp * fa.gamma.p;
+        si.prior.rho.b = (1 - op.damp) * si.prior.rho.b + op.damp * (1 - fa.gamma.p);
+        %si.prior.rho.a = fa.gamma.p;
+        %si.prior.rho.b = (1 - fa.gamma.p);
+        
+        fa = compute_full_approximation_rho(fa, si, pr);
+        
+        % EP
+        cav_nat = fa.gamma.p_nat - si.prior.gamma.rho_nat;
+        cav_a_m_cav_nat = (fa.rho.a - si.prior.rho.a - 1 + eps) .* cav_nat;
+        cav_b = fa.rho.b - si.prior.rho.b - 1 + eps;
+        ti_mean = cav_a_m_cav_nat ./ (cav_a_m_cav_nat + cav_b);
+        ti_mean = max(min(ti_mean, 1-eps), eps);
+        
+        si.prior.gamma.rho_nat = (1 - op.damp) * si.prior.gamma.rho_nat + op.damp * (log(ti_mean) - log1p(-ti_mean) - cav_nat);
+        
+        fa = compute_full_approximation_gamma(fa, si, pr);
+    end
+
     %% sigma2 and (the associated) likelihood VB update
     if pr.sigma2_prior
         % sigma2 update
@@ -109,6 +143,7 @@ for iter = 1:op.max_iter
 
         % TODO: should we damp VB updates?
         si.lik.sigma2.b = (1 - op.damp) * si.lik.sigma2.b + op.damp * (0.5 * (pr.yy - 2 * (fa.w.Mean' * pr.xy) + tr_tmp(:)' * tr_tmp(:) + fa.w.Mean' * pr.xx * fa.w.Mean));
+        %si.lik.sigma2.b = 0.5 * (pr.yy - 2 * (fa.w.Mean' * pr.xy) + tr_tmp(:)' * tr_tmp(:) + fa.w.Mean' * pr.xx * fa.w.Mean);
 
         fa = compute_full_approximation_sigma2(fa, si, pr);
 
@@ -147,6 +182,8 @@ for iter = 1:op.max_iter
     %% update damp
     op.damp = op.damp * op.damp_decay;
 end
+
+iter
 
 if op.verbosity > 0 && converged == 0
     fprintf(1, 'EP hit maximum number of iterations\n');
@@ -257,12 +294,26 @@ fa = compute_full_approximation_gamma(fa, si, pr);
 if pr.sigma2_prior
     fa = compute_full_approximation_sigma2(fa, si, pr);
 end
+if pr.rho_prior
+    fa = compute_full_approximation_rho(fa, si, pr);
+end
+
+end
+
+
+function fa = compute_full_approximation_rho(fa, si, pr)
+
+% These are Beta distribution parameters in the common parametrization;
+% pr params are also, while si params are natural parameters.
+fa.rho.a = sum(si.prior.rho.a) + pr.rho_a;
+fa.rho.b = sum(si.prior.rho.b) + pr.rho_b;
 
 end
 
 
 function fa = compute_full_approximation_sigma2(fa, si, pr)
 
+% a and b are in the common parametrization of Gamma (the one with mean = a/b)
 fa.sigma2.imean = (pr.sigma2_a + si.lik.sigma2.a) / (pr.sigma2_b + si.lik.sigma2.b); % note: approx is for sigma2^-1
 
 end
@@ -281,7 +332,7 @@ end
 
 function fa = compute_full_approximation_gamma(fa, si, pr)
 
-fa.gamma.p_nat = si.prior.gamma.p_nat + si.gf.gamma.p_nat + pr.rho_nat;
+fa.gamma.p_nat = si.prior.gamma.p_nat + si.gf.gamma.p_nat + si.prior.gamma.rho_nat;
 fa.gamma.p = 1 ./ (1 + exp(-fa.gamma.p_nat));
 
 end
