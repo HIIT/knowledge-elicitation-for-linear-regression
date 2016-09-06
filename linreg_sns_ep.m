@@ -106,7 +106,9 @@ for iter = 1:op.max_iter
     if pr.sigma2_prior
         % sigma2 update
         tr_tmp = x / fa.w.Tau_chol';
-        si.lik.sigma2.b = 0.5 * (pr.yy - 2 * (fa.w.Mean' * pr.xy) + tr_tmp(:)' * tr_tmp(:) + fa.w.Mean' * pr.xx * fa.w.Mean);
+
+        % TODO: should we damp VB updates?
+        si.lik.sigma2.b = (1 - op.damp) * si.lik.sigma2.b + op.damp * (0.5 * (pr.yy - 2 * (fa.w.Mean' * pr.xy) + tr_tmp(:)' * tr_tmp(:) + fa.w.Mean' * pr.xx * fa.w.Mean));
 
         fa = compute_full_approximation_sigma2(fa, si, pr);
 
