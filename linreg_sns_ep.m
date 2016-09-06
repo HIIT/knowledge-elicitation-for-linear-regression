@@ -183,8 +183,6 @@ for iter = 1:op.max_iter
     op.damp = op.damp * op.damp_decay;
 end
 
-iter
-
 if op.verbosity > 0 && converged == 0
     fprintf(1, 'EP hit maximum number of iterations\n');
 end
