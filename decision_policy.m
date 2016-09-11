@@ -5,6 +5,12 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
     num_features = size(posterior.mean,1);
     num_data = size(X,2);
     
+    if (MODE == 1 || MODE == 2) && isfield(sparse_params, 'sigma2_prior') && sparse_params.sigma2_prior
+        residual_var = 1 / posterior.fa.sigma2.imean;
+    else
+        residual_var = model_params.Nu_y^2;
+    end
+
     %Combination of UCB and LCB
     if strcmp(Method_name,'Max(90% UCB,90% LCB)') 
         % Assume that the features of Theta are independent
@@ -65,7 +71,7 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
                 new_theta_user = [Feedback; 1 , j];
                 new_posterior = calculate_posterior(X, Y, new_theta_user, model_params, MODE, sparse_params, sparse_options);
                 for i=1:num_data
-                    Utility(j) = Utility(j) -0.5*( 1+ log(2*pi*( X(:,i)'*new_posterior.sigma*X(:,i) + model_params.Nu_y^2   ) ) );
+                    Utility(j) = Utility(j) -0.5*( 1+ log(2*pi*( X(:,i)'*new_posterior.sigma*X(:,i) + residual_var   ) ) );
                 end        
             end
             [~,selected_feature]= max(Utility);          
@@ -95,7 +101,7 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
                          + old_mu * new_f' + new_f * old_mu' ...
                          + new_f_v) * new_posterior.sigma;
                 for i=1:num_data
-                    new_var = X(:,i)' * new_posterior.sigma * X(:,i) + model_params.Nu_y^2;
+                    new_var = X(:,i)' * new_posterior.sigma * X(:,i) + residual_var;
                     Utility(j) = Utility(j) - 0.5 * log(2 * pi) ...
                                  - 0.5 * log(new_var) ...
                                  - 0.5 * (Y(i)^2 - 2 * Y(i) * X(:, i)' * new_posterior.mean ...
@@ -148,9 +154,9 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
             xTsigmax = sum(X .* sigmax, 1);
             xTsigma_newx = bsxfun(@minus, xTsigmax, bsxfun(@rdivide, sigmax.^2, alpha * model_params.Nu_user^2));
 
-            part1 = 0.5 * log(bsxfun(@rdivide, xTsigmax + model_params.Nu_y^2, xTsigma_newx + model_params.Nu_y^2));
-            part2_numerator = xTsigma_newx + model_params.Nu_y^2 + bsxfun(@times, bsxfun(@rdivide, sigmax, alpha * model_params.Nu_y^2).^2, sTsigmas + model_params.Nu_y^2);
-            part2_denumerator = 2 * (xTsigmax + model_params.Nu_y^2);
+            part1 = 0.5 * log(bsxfun(@rdivide, xTsigmax + residual_var, xTsigma_newx + residual_var));
+            part2_numerator = xTsigma_newx + residual_var + bsxfun(@times, bsxfun(@rdivide, sigmax, alpha * residual_var).^2, sTsigmas + residual_var);
+            part2_denumerator = 2 * (xTsigmax + residual_var);
 
             Utility = sum(part1 + bsxfun(@rdivide, part2_numerator , part2_denumerator) - 0.5, 2);
 
@@ -200,7 +206,7 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
             sigmax = posterior.sigma * X;
             xTsigmax = sum(X .* sigmax, 1);
             xMu = X' * posterior.mean;
-            part2_denumerator = 2 * (xTsigmax + model_params.Nu_y^2);
+            part2_denumerator = 2 * (xTsigmax + residual_var);
             for j=1: num_features
                 %Calculate the KL divergence between posterior predictive after and before feedback
                 % if feedback is 1
@@ -209,9 +215,9 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
                 new_posterior_1 = calculate_posterior(X, Y, new_fb_1, model_params, MODE, sparse_params, sparse_options);
                 sx_1 = new_posterior_1.sigma * X;
                 xTsigma_1x = sum(X .* sx_1, 1);
-                part1 = 0.5 * log( (xTsigmax + model_params.Nu_y^2)./(xTsigma_1x + model_params.Nu_y^2) );
+                part1 = 0.5 * log( (xTsigmax + residual_var)./(xTsigma_1x + residual_var) );
                 xMu_1 = X' * new_posterior_1.mean; 
-                part2_numerator = xTsigma_1x + model_params.Nu_y^2 + (xMu_1' - xMu').^2;
+                part2_numerator = xTsigma_1x + residual_var + (xMu_1' - xMu').^2;
                 
                 KL_1 = sum(part1 + part2_numerator ./ part2_denumerator - 0.5, 2);
                 
@@ -221,9 +227,9 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
                 new_posterior_0 = calculate_posterior(X, Y, new_fb_0, model_params, MODE, sparse_params, sparse_options);
                 sx_0 = new_posterior_0.sigma * X;
                 xTsigma_0x = sum(X .* sx_0, 1);
-                part1 = 0.5 * log( (xTsigmax + model_params.Nu_y^2)./(xTsigma_0x + model_params.Nu_y^2) );
+                part1 = 0.5 * log( (xTsigmax + residual_var)./(xTsigma_0x + residual_var) );
                 xMu_0 = X' * new_posterior_0.mean;
-                part2_numerator = xTsigma_0x + model_params.Nu_y^2 + (xMu_0' - xMu').^2;
+                part2_numerator = xTsigma_0x + residual_var + (xMu_0' - xMu').^2;
                 KL_0 = sum(part1 + part2_numerator ./ part2_denumerator - 0.5, 2);
                 
                 %Calculate the E[KL], where expectation is on the posterior predictive of the feedback value
@@ -280,27 +286,28 @@ end
 
 function kl = compute_post_pred_kl(feedback, posterior, pr, op, X, model_params)
 
+sf = posterior.ep_subfunctions;
+
 m = length(posterior.p);
 fa = posterior.fa;
 si = posterior.si;
 feedbacks = [(feedback * ones(m, 1)) (1:m)'];
 
 pr.m = m;
-pr.rho_nat = log(pr.rho) - log1p(-pr.rho);
 pr.p_u_nat = log(pr.p_u) - log1p(-pr.p_u);
 
 % EP updates
-ca_gf = compute_gf_cavity(fa, si.gf);
-ti_gf = compute_gf_tilt(ca_gf, pr, feedbacks);
-si.gf = update_gf_sites(si.gf, ca_gf, ti_gf, feedbacks, op);
-fa = compute_full_approximation_gamma(fa, si, pr);
-ca_prior = compute_w_prior_cavity(fa, si.prior, pr);
-ti_prior = compute_w_prior_tilt(ca_prior, pr);
-si.prior = update_w_prior_sites(si.prior, ca_prior, ti_prior, op);
+ca_gf = sf.compute_gf_cavity(fa.gamma.p_nat, si.gamma_feedback);
+ti_gf = sf.compute_gf_tilt(ca_gf, pr, feedbacks);
+si.gamma_feedback = sf.update_gf_sites(si.gamma_feedback, ca_gf, ti_gf, feedbacks, op);
+fa = sf.compute_full_approximation_gamma(fa, si, pr);
+ca_prior = sf.compute_w_prior_cavity(fa, si.w_prior, pr);
+ti_prior = sf.compute_w_prior_tilt(ca_prior, pr);
+si.w_prior = sf.update_w_prior_sites(si.w_prior, ca_prior, ti_prior, op);
 
 % changes in parameters
-delta_tau = si.prior.w.tau - posterior.si.prior.w.tau;
-delta_mu = si.prior.w.mu - posterior.si.prior.w.mu;
+delta_tau = si.w_prior.normal_tau - posterior.si.w_prior.normal_tau;
+delta_mu = si.w_prior.normal_mu - posterior.si.w_prior.normal_mu;
 
 % KL
 alpha = 1 + diag(posterior.sigma) .* delta_tau;
@@ -309,115 +316,17 @@ sigmax = posterior.sigma * X;
 xTsigmax = sum(X .* sigmax, 1);
 xTsigma_newx = bsxfun(@minus, xTsigmax, bsxfun(@rdivide, sigmax.^2, alpha ./ delta_tau));
 
-part1 = 0.5 * log(bsxfun(@rdivide, xTsigmax + model_params.Nu_y^2, xTsigma_newx + model_params.Nu_y^2));
+if isfield(pr, 'sigma2_prior') && pr.sigma2_prior
+    residual_var = 1 / posterior.fa.sigma2.imean;
+else
+    residual_var = model_params.Nu_y^2;
+end
+
+part1 = 0.5 * log(bsxfun(@rdivide, xTsigmax + residual_var, xTsigma_newx + residual_var));
 %part2_numerator = xTsigma_newx + model_params.Nu_y^2 + bsxfun(@times, bsxfun(@rdivide, sigmax, alpha * model_params.Nu_y^2).^2, sTsigmas + model_params.Nu_y^2);
-part2_numerator = xTsigma_newx + model_params.Nu_y^2 + bsxfun(@times, sigmax, (posterior.mean .* delta_tau - delta_mu) ./ alpha).^2;
-part2_denumerator = 2 * (xTsigmax + model_params.Nu_y^2);
+part2_numerator = xTsigma_newx + residual_var + bsxfun(@times, sigmax, (posterior.mean .* delta_tau - delta_mu) ./ alpha).^2;
+part2_denumerator = 2 * (xTsigmax + residual_var);
 
 kl = sum(part1 + bsxfun(@rdivide, part2_numerator , part2_denumerator) - 0.5, 2);
-
-end
-
-% TODO: these are copy-pasted from linreg_ss_ep.m. Refactor to use same
-% code?
-
-function ca = compute_gf_cavity(fa, si)
-
-ca.gamma.p_nat = fa.gamma.p_nat - si.gamma.p_nat;
-
-end
-
-
-function ti = compute_gf_tilt(ca, pr, feedbacks)
-
-% feedbacks: first is value, second index.
-% Computes only those with feedback:
-ti.gamma.mean = 1 ./ (1 + exp(-(ca.gamma.p_nat(feedbacks(:,2)) + (2 * feedbacks(:, 1) - 1) .* pr.p_u_nat)));
-ti.gamma.mean = max(min(ti.gamma.mean, 1-eps), eps);
-
-end
-
-
-function si = update_gf_sites(si, ca, ti, feedbacks, op)
-
-si.gamma.p_nat(feedbacks(:,2)) = (1 - op.damp) * si.gamma.p_nat(feedbacks(:,2)) + op.damp * (log(ti.gamma.mean) - log1p(-ti.gamma.mean) - ca.gamma.p_nat(feedbacks(:,2)));
-
-end
-
-
-function ca = compute_w_prior_cavity(fa, si, pr)
-
-m = pr.m;
-
-tmp = fa.w.Tau_chol \ eye(m);
-var_w = sum(tmp.^2)';
-
-denom = (1 - si.w.tau .* var_w);
-ca.w.tau = denom ./ var_w;
-ca.w.mean = (fa.w.Mean - var_w .* si.w.mu) ./ denom;
-
-ca.gamma.p_nat = fa.gamma.p_nat - si.gamma.p_nat;
-ca.gamma.p = 1 ./ (1 + exp(-ca.gamma.p_nat));
-
-end
-
-
-function [ti, z] = compute_w_prior_tilt(ca, pr)
-
-t = ca.w.tau + 1 ./ pr.tau2;
-
-g_var = 1 ./ ca.w.tau; % for gamma0
-mcav2 = ca.w.mean.^2;
-log_z_gamma0 = log1p(-ca.gamma.p) - 0.5 * log(g_var) - 0.5 * mcav2 ./ g_var;
-g_var = pr.tau2 + g_var; % for gamma1
-log_z_gamma1 = log(ca.gamma.p) - 0.5 * log(g_var) - 0.5 * mcav2 ./ g_var;
-z_gamma0 = exp(log_z_gamma0 - log_z_gamma1);
-z_gamma1 = ones(size(log_z_gamma1));
-z = 1 + z_gamma0;
-
-ti.w.mean = z_gamma1 .* (ca.w.tau .* ca.w.mean) ./ t ./ z;
-e2_w_tilt = z_gamma1 .* (1 ./ t + 1 ./ t.^2 .* (ca.w.tau .* ca.w.mean).^2) ./ z;
-ti.w.var = e2_w_tilt - ti.w.mean.^2;
-
-ti.gamma.mean = z_gamma1 ./ z;
-ti.gamma.mean = max(min(ti.gamma.mean, 1-eps), eps);
-
-end
-
-
-function [si, nonpositive_cavity_vars, nonpositive_site_var_proposals] = update_w_prior_sites(si, ca, ti, op)
-
-nonpositive_site_var_proposals = false;
-
-% skip negative cavs
-update_inds = ca.w.tau(:) > 0;
-nonpositive_cavity_vars = ~all(update_inds);
-
-new_tau_w_site = 1 ./ ti.w.var - ca.w.tau;
-
-switch op.robust_updates
-    case 0
-    case 1
-        inds_tmp = new_tau_w_site(:) > 0;
-        nonpositive_site_var_proposals = ~all(inds_tmp);
-        update_inds = update_inds & inds_tmp;
-    case 2
-        inds = new_tau_w_site(:) <= 0;
-        new_tau_w_site(inds) = op.min_site_prec;
-        ti.w.var(inds) = 1./(op.min_site_prec + ca.w.tau(inds));
-end
-new_mu_w_site = ti.w.mean ./ ti.w.var - ca.w.tau .* ca.w.mean;
-si.w.tau(update_inds) = (1 - op.damp) * si.w.tau(update_inds) + op.damp * new_tau_w_site(update_inds);
-si.w.mu(update_inds) = (1 - op.damp) * si.w.mu(update_inds) + op.damp * new_mu_w_site(update_inds);
-
-si.gamma.p_nat(update_inds) = (1 - op.damp) * si.gamma.p_nat(update_inds) + op.damp * (log(ti.gamma.mean(update_inds)) - log1p(-ti.gamma.mean(update_inds)) - ca.gamma.p_nat(update_inds));
-
-end
-
-
-function fa = compute_full_approximation_gamma(fa, si, pr)
-
-fa.gamma.p_nat = si.prior.gamma.p_nat + si.gf.gamma.p_nat + pr.rho_nat;
-fa.gamma.p = 1 ./ (1 + exp(-fa.gamma.p_nat));
 
 end
