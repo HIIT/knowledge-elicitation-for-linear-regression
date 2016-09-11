@@ -7,13 +7,15 @@ function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, w_feedbacks, gamma_fe
 %    p(w_j|gamma_j=1) = Normal(w_j|0, tau2)
 %    p(w_j|gamma_j=0) = delta(w_j)
 %    p(gamma_j|rho) = Bernoulli(gamma_j|rho)
-%    p(sigma2^-1) = Gamma(sigma2^-1|a,b) or fixed sigma2
+%    p(rho) = Beta(rho|rho_a, rho_b)
+%    p(sigma2^-1) = Gamma(sigma2^-1|sigma2_a,sigma2_b) or fixed sigma2
 % -- Approximation;
-%    q(w) = Normal(w|Mean_w, Var_w), Var_w = Tau_w^-1
-%    q(gamma) = \prod Bernoulli(gamma_j|p_gamma_j)
-%    q(sigma2^-1) = Gamma(sigma2^-1|a,b)
+%    q(w) = Normal(w|w.Mean, w_Var), w_Var = w.Tau^-1
+%    q(gamma) = \prod_j Bernoulli(gamma_j|gamma.p_j)
+%    q(sigma2^-1) = Gamma(sigma2^-1|sigma2_a,sigma2_b), mean: sigma2.imean
+%    q(rho) = Beta(rho|rho.a,rho.b)
 %
-%    sigma2 is updated using VB (if not fixed), other terms using EP.
+%    sigma2 and rho are updated using VB (if not fixed), other terms using EP.
 %
 % Inputs:
 % y                target values (n x 1)
@@ -22,6 +24,7 @@ function [fa, si, converged] = linreg_sns_ep(y, x, pr, op, w_feedbacks, gamma_fe
 % op               options for the EP algorithm (struct)
 % w_feedbacks      values (1st column) and indices (2nd column) of feedback (n_w_feedbacks x 2)
 % gamma_feedbacks  values (1st column, 0/1) and indices (2nd column) of feedback (n_gamma_feedbacks x 2)
+% si               if given, (some of) site parameters initialized to these
 %
 % Outputs:
 % fa         EP posterior approximation (struct)
