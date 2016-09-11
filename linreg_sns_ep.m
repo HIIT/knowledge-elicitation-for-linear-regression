@@ -90,9 +90,6 @@ else
     pr.rho_prior = 0;
 end
 
-% TODO: refactor function names to reflect their general updates rather the
-% specific terms in this model.
-
 % full approximation
 fa = compute_full_approximation(si, pr);
 
@@ -104,13 +101,13 @@ conv.z_old = Inf * ones(m, 1);
 for iter = 1:op.max_iter
     %% w prior updates
     % cavity
-    ca_w_prior = compute_w_prior_cavity(fa, si.w_prior, pr);
+    ca_w_prior = compute_sns_prior_cavity(fa, si.w_prior, pr);
     
     % moments of tilted dists
-    [ti_w_prior, z_w] = compute_w_prior_tilt(ca_w_prior, pr);
+    [ti_w_prior, z_w] = compute_sns_prior_tilt(ca_w_prior, pr);
     
     % site updates
-    si.w_prior = update_w_prior_sites(si.w_prior, ca_w_prior, ti_w_prior, op);
+    si.w_prior = update_sns_prior_sites(si.w_prior, ca_w_prior, ti_w_prior, op);
     
     % full approx update
     fa = compute_full_approximation_w(fa, si, pr);
@@ -119,12 +116,12 @@ for iter = 1:op.max_iter
     %% gamma prior updates, EP for gamma, VB for rho
     if pr.rho_prior
         % VB
-        si.gamma_prior = update_bernoulli_site_vb(si.gamma_prior, fa.gamma.p, op);
+        si.gamma_prior = update_bernoulli_sites_vb(si.gamma_prior, fa.gamma.p, op);
         
         fa = compute_full_approximation_rho(fa, si, pr);
         
         % EP
-        si.gamma_prior = update_bernoulli_site_ep(si.gamma_prior, fa.gamma.p_nat, fa.rho.a, fa.rho.b, op);
+        si.gamma_prior = update_bernoulli_sites_ep(si.gamma_prior, fa.gamma.p_nat, fa.rho.a, fa.rho.b, op);
        
         fa = compute_full_approximation_gamma(fa, si, pr);
     end
@@ -146,13 +143,13 @@ for iter = 1:op.max_iter
     %% gamma feedback updates
     if n_gamma_feedbacks > 0
         % cavity
-        ca_gf = compute_gf_cavity(fa.gamma.p_nat, si.gamma_feedback);
+        ca_gf = compute_bernoulli_lik_cavity(fa.gamma.p_nat, si.gamma_feedback, gamma_feedbacks(:, 2));
 
         % moments of tilted dists
-        ti_gf = compute_gf_tilt(ca_gf, pr, gamma_feedbacks);
+        ti_gf = compute_bernoulli_lik_tilt(ca_gf, pr, gamma_feedbacks(:, 1));
 
         % site updates
-        si.gamma_feedback = update_gf_sites(si.gamma_feedback, ca_gf, ti_gf, gamma_feedbacks, op);
+        si.gamma_feedback = update_bernoulli_lik_sites(si.gamma_feedback, ca_gf, ti_gf, op, gamma_feedbacks(:, 2));
 
         % full approx update (update only gamma part as only those sites have been updated)
         fa = compute_full_approximation_gamma(fa, si, pr);
@@ -178,14 +175,14 @@ end
 if nargout > 3
     subfunctions.update_gaussian_lik_normal_site_vb = @update_gaussian_lik_normal_site_vb;
     subfunctions.update_gaussian_lik_prec_site_vb = @update_gaussian_lik_prec_site_vb;
-    subfunctions.update_bernoulli_site_vb = @update_bernoulli_site_vb;
-    subfunctions.update_bernoulli_site_ep = @update_bernoulli_site_ep;
-    subfunctions.compute_gf_cavity = @compute_gf_cavity;
-    subfunctions.compute_gf_tilt = @compute_gf_tilt;
-    subfunctions.update_gf_sites = @update_gf_sites;
-    subfunctions.compute_w_prior_cavity = @compute_w_prior_cavity;
-    subfunctions.compute_w_prior_tilt = @compute_w_prior_tilt;
-    subfunctions.update_w_prior_sites = @update_w_prior_sites;
+    subfunctions.update_bernoulli_sites_vb = @update_bernoulli_sites_vb;
+    subfunctions.update_bernoulli_sites_ep = @update_bernoulli_sites_ep;
+    subfunctions.compute_bernoulli_lik_cavity = @compute_bernoulli_lik_cavity;
+    subfunctions.compute_bernoulli_lik_tilt = @compute_bernoulli_lik_tilt;
+    subfunctions.update_bernoulli_lik_sites = @update_bernoulli_lik_sites;
+    subfunctions.compute_sns_prior_cavity = @compute_sns_prior_cavity;
+    subfunctions.compute_sns_prior_tilt = @compute_sns_prior_tilt;
+    subfunctions.update_sns_prior_sites = @update_sns_prior_sites;
     subfunctions.compute_full_approximation = @compute_full_approximation;
     subfunctions.compute_full_approximation_rho = @compute_full_approximation_rho;
     subfunctions.compute_full_approximation_sigma2 = @compute_full_approximation_sigma2;
@@ -214,7 +211,7 @@ si.gamma_b = (1 - op.damp) * si.gamma_b + op.damp * (0.5 * (yy - 2 * (normal_Mea
 end
 
 
-function si = update_bernoulli_site_vb(si, p, op)
+function si = update_bernoulli_sites_vb(si, p, op)
 % This updates the conditioning variable (probability parameter).
 
 si.beta_a = (1 - op.damp) * si.beta_a + op.damp * p;
@@ -225,8 +222,8 @@ si.beta_b = (1 - op.damp) * si.beta_b + op.damp * (1 - p);
 end
 
 
-function si = update_bernoulli_site_ep(si, fa_bernoulli_p_nat, fa_beta_a, fa_beta_b, op)
-% This update the main variable (indicator variable).
+function si = update_bernoulli_sites_ep(si, fa_bernoulli_p_nat, fa_beta_a, fa_beta_b, op)
+% This updates the main variable (indicator variable).
 
 % cavity
 cav_nat = fa_bernoulli_p_nat - si.bernoulli_p_nat;
@@ -243,31 +240,37 @@ si.bernoulli_p_nat = (1 - op.damp) * si.bernoulli_p_nat + op.damp * (log(ti_mean
 end
 
 
-function ca = compute_gf_cavity(bernoulli_p_nat, si)
+function ca = compute_bernoulli_lik_cavity(bernoulli_p_nat, si, inds)
 
-ca.bernoulli_p_nat = bernoulli_p_nat - si.bernoulli_p_nat;
+if nargin < 3
+    ca.bernoulli_p_nat = bernoulli_p_nat - si.bernoulli_p_nat;
+else
+    ca.bernoulli_p_nat = bernoulli_p_nat(inds) - si.bernoulli_p_nat(inds);
+end
 
 end
 
 
-function ti = compute_gf_tilt(ca, pr, feedbacks)
+function ti = compute_bernoulli_lik_tilt(ca, pr, observations)
 
-% feedbacks: first is value, second index.
-% Computes only those with feedback:
-ti.bernoulli_mean = 1 ./ (1 + exp(-(ca.bernoulli_p_nat(feedbacks(:,2)) + (2 * feedbacks(:, 1) - 1) .* pr.p_u_nat)));
+ti.bernoulli_mean = 1 ./ (1 + exp(-(ca.bernoulli_p_nat + (2 * observations - 1) .* pr.p_u_nat)));
 ti.bernoulli_mean = max(min(ti.bernoulli_mean, 1-eps), eps);
 
 end
 
 
-function si = update_gf_sites(si, ca, ti, feedbacks, op)
+function si = update_bernoulli_lik_sites(si, ca, ti, op, inds)
 
-si.bernoulli_p_nat(feedbacks(:,2)) = (1 - op.damp) * si.bernoulli_p_nat(feedbacks(:,2)) + op.damp * (log(ti.bernoulli_mean) - log1p(-ti.bernoulli_mean) - ca.bernoulli_p_nat(feedbacks(:,2)));
+if nargin < 5
+    si.bernoulli_p_nat = (1 - op.damp) * si.bernoulli_p_nat + op.damp * (log(ti.bernoulli_mean) - log1p(-ti.bernoulli_mean) - ca.bernoulli_p_nat);
+else
+    si.bernoulli_p_nat(inds) = (1 - op.damp) * si.bernoulli_p_nat(inds) + op.damp * (log(ti.bernoulli_mean) - log1p(-ti.bernoulli_mean) - ca.bernoulli_p_nat);
+end
 
 end
 
 
-function ca = compute_w_prior_cavity(fa, si, pr)
+function ca = compute_sns_prior_cavity(fa, si, pr)
 
 m = pr.m;
 
@@ -284,7 +287,7 @@ ca.bernoulli_p = 1 ./ (1 + exp(-ca.bernoulli_p_nat));
 end
 
 
-function [ti, z] = compute_w_prior_tilt(ca, pr)
+function [ti, z] = compute_sns_prior_tilt(ca, pr)
 
 t = ca.normal_tau + 1 ./ pr.tau2;
 
@@ -307,7 +310,7 @@ ti.bernoulli_mean = max(min(ti.bernoulli_mean, 1-eps), eps);
 end
 
 
-function [si, nonpositive_cavity_vars, nonpositive_site_var_proposals] = update_w_prior_sites(si, ca, ti, op)
+function [si, nonpositive_cavity_vars, nonpositive_site_var_proposals] = update_sns_prior_sites(si, ca, ti, op)
 
 nonpositive_site_var_proposals = false;
 

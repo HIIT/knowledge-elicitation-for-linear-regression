@@ -291,19 +291,18 @@ sf = posterior.ep_subfunctions;
 m = length(posterior.p);
 fa = posterior.fa;
 si = posterior.si;
-feedbacks = [(feedback * ones(m, 1)) (1:m)'];
 
 pr.m = m;
 pr.p_u_nat = log(pr.p_u) - log1p(-pr.p_u);
 
 % EP updates
-ca_gf = sf.compute_gf_cavity(fa.gamma.p_nat, si.gamma_feedback);
-ti_gf = sf.compute_gf_tilt(ca_gf, pr, feedbacks);
-si.gamma_feedback = sf.update_gf_sites(si.gamma_feedback, ca_gf, ti_gf, feedbacks, op);
+ca_gf = sf.compute_bernoulli_lik_cavity(fa.gamma.p_nat, si.gamma_feedback);
+ti_gf = sf.compute_bernoulli_lik_tilt(ca_gf, pr, feedback * ones(m, 1));
+si.gamma_feedback = sf.update_bernoulli_lik_sites(si.gamma_feedback, ca_gf, ti_gf, op);
 fa = sf.compute_full_approximation_gamma(fa, si, pr);
-ca_prior = sf.compute_w_prior_cavity(fa, si.w_prior, pr);
-ti_prior = sf.compute_w_prior_tilt(ca_prior, pr);
-si.w_prior = sf.update_w_prior_sites(si.w_prior, ca_prior, ti_prior, op);
+ca_prior = sf.compute_sns_prior_cavity(fa, si.w_prior, pr);
+ti_prior = sf.compute_sns_prior_tilt(ca_prior, pr);
+si.w_prior = sf.update_sns_prior_sites(si.w_prior, ca_prior, ti_prior, op);
 
 % changes in parameters
 delta_tau = si.w_prior.normal_tau - posterior.si.w_prior.normal_tau;
