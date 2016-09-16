@@ -1,7 +1,7 @@
 load('yelp_academic_data_raw.mat');
 %it gives us X_all_raw, Y_all, keywords_all
 %% Filter the data to only contain features with more than thershold appearance
-appearance_threshold = 50;
+appearance_threshold = 100;
 
 num_data     = size(X_all_raw,1);
 num_orig_dim = size(X_all_raw,2);
