@@ -1,7 +1,14 @@
 function [ selected_feature ] = decision_policy( posterior , Method_name, z_star, X, Y, Feedback, model_params, MODE, sparse_params, sparse_options)
 %DECISION_POLICY chooses one of the features to show to the user. 
+% Inputs:
+% MODE          Feedback type: 0 and 1: noisy observation of weight. 2: binary relevance of feature
+%               0: analytical solution for the posterior with multivariate Gaussian prior
+%               1: Multivariate Gaussian approximation of the posterior with spike and slab prior
+%               2: Joint posterior approximation with EP.
+% X             covariates (d x n)
+% Y             response values
+% feedback      values (1st column) and indices (2nd column) of feedback (n_feedbacks x 2)
 
-% TODO: if we consider only Gaussian posterior then the inputs can be trimmed a little bit
     num_features = size(posterior.mean,1);
     num_data = size(X,2);
     
