@@ -68,7 +68,9 @@ for iparams = 1:num_params
         Y_train = (Y_train - y_mean)./y_std;
         %Y_test = (Y_test - y_mean)./y_std; % predictions are transformed back to the original scale
         x_mean  = mean(X_train,1);
-        x_std   = std(X_train);
+        x_std   = std(X_train); 
+        %some of the x_stds can be zero if training size is small. don't divide the data by std if std==0
+        x_std(x_std==0) = 1;
         X_train = bsxfun(@minus,X_train,x_mean);
         X_train = bsxfun(@rdivide, X_train, x_std);
         X_test  = bsxfun(@minus,X_test,x_mean);
@@ -113,6 +115,8 @@ y_std  = std(Y_all);
 Y_all_new = (Y_all - y_mean)./y_std;
 x_mean  = mean(X_all,1);
 x_std   = std(X_all);
+%some of the x_stds can be zero if training size is small. don't divide the data by std if std==0
+x_std(x_std==0) = 1;
 X_all_new = bsxfun(@minus,X_all,x_mean);
 X_all_new = bsxfun(@rdivide, X_all_new, x_std);
 
