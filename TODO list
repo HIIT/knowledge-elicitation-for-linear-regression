@@ -1,6 +1,6 @@
-1. Remove features that are all zero in the training data (in real data case scripts of main and main_all).
-2. Add rng seeding somewhere so that we get reproducible results in all cases where randomness is used.
-3. user feedback in the real data case should be created using a seperate set of data (not training or test). DONE
+1. DONE ---- Remove features that are all zero in the training data (in real data case scripts of main and main_all). 
+2. DONE ---- Add rng seeding somewhere so that we get reproducible results in all cases where randomness is used.
+3. DONE ---- user feedback in the real data case should be created using a seperate set of data (not training or test).
 4. Check the normalization of X_all and Y_all in all the main scripts and use main_amazon as model for them.
 5. Re-visit candi scripts and update them based on new edits.
 6. Add non-sequential methods in the decision_policy function for better comparison.

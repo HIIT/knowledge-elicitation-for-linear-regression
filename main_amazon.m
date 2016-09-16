@@ -1,5 +1,6 @@
 close all
 clear all
+RNG_SEED = rng;
 
 %% Parameters and data setup
 MODE = 2; 
@@ -201,5 +202,5 @@ end
 %% averaging and plotting
 z_star = z_star_gt;
 save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'model_params', ...
-    'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method')
+    'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
 evaluate_results

@@ -1,5 +1,6 @@
 close all
 clear all
+RNG_SEED = rng;
 
 %% Parameters and Simulator setup
 MODE = 2; 
@@ -42,8 +43,8 @@ METHODS_ED = {
      'True',  'Expected information gain (post_pred), fast approx'
      };
 METHODS_AL = {
-     'False',  'AL:Uniformly random';
-     'False',  'AL: Expected information gain'
+     'True',  'AL:Uniformly random';
+     'True',  'AL: Expected information gain'
      }; 
 Method_list_ED = [];
 for m = 1:size(METHODS_ED,1)
@@ -126,5 +127,5 @@ for run = 1:num_runs
 end
 %% averaging and plotting
 save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'model_params', ...
-    'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method')
+    'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
 evaluate_results
