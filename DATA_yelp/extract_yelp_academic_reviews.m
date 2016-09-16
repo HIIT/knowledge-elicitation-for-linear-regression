@@ -31,13 +31,13 @@ keywords_all =  cell(1,Max_num_keyword);
 
 for i=1:Max_review_number
     disp(['line number = ', num2str(i), ' num unique keys = ',num2str(idx_last_key)] );
-    keywordNumber = strsplit(A{selected_reviews(i)}, ' ');
+    keywordsInReview = lower(strsplit(A{selected_reviews(i)}, ' '));
     % extract the number of stars from column 13 
-    a = strsplit(keywordNumber{13}, ',');
+    a = strsplit(keywordsInReview{13}, ',');
     Y_all(i) = str2double(a{1}); 
     % extract the review' text
-    for j = 17: (size(keywordNumber,2)-4)
-        keyword = keywordNumber{j};  
+    for j = 17: (size(keywordsInReview,2)-4)
+        keyword = alphanumeric(keywordsInReview{j}); 
         number = 1;
         %if this is the first keyword
         if (idx_last_key == 1)           
@@ -61,6 +61,6 @@ X_all_raw(:,idx_last_key:end) = [];
 Y_all(idx_last_key:end)   = [];
 keywords_all(idx_last_key:end) = [];
 
-save('yelp_academic_data_raw','X_all_raw','Y_all','keywords_all','-v7.3');
+save('yelp_academic_data_raw_clean','X_all_raw','Y_all','keywords_all','-v7.3');
 
 
