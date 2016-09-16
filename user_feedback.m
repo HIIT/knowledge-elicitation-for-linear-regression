@@ -8,9 +8,17 @@ function [ feedback_value ] = user_feedback(feature_index, theta_star, z_star, M
 % simulation      true: the user has been generated, false: real data 
 
     if MODE == 0 || MODE == 1
-        %user feedback is a noisy observation of the weight value
-        feedback_value = normrnd(theta_star(feature_index),model_params.Nu_user);
+        %in case we are using simulated data then use the model parameters
+        if model_params.simulated_data
+            %user feedback is a noisy observation of the weight value
+            feedback_value = normrnd(theta_star(feature_index),model_params.Nu_user);
+        else
+            %if we are using real data, use the user feedback (do not add
+            %the model noise since data has noise itself)
+            feedback_value = theta_star(feature_index);
+        end
     end
+    
     if MODE == 2
         %user feedback is on the relevance of the weight value
         %In some cases the user may not know the relevance (too much
