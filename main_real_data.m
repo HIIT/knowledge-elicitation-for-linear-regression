@@ -2,18 +2,21 @@ close all
 clear all
 RNG_SEED = rng;
 
+%% Load the proper dataset
+%The following line loads X_all, Y_all, and keywords (name of features)
+load('DATA_amazon\amazon_data');
+% load('DATA_yelp\yelp_academic_data');
+%The following line loads sparse parameters learned by CV and also theta_star 
+% and P_gamma leaned by using all the data (ground truth).
+load('DATA_amazon\cv_results');
+% load('DATA_yelp\cv_results');
+
 %% Parameters and data setup
 MODE = 2; 
 % MODE specifies the  type of feedback and the model that we are using
 %           0: Feedback on weight values. Model: Gaussian prior 
 %           1: Feedback on weight values. Model: spike and slab prior
 %           2: Feedback on relevance of features. Model: spike and slab prior
-
-%The following line loads X_all, Y_all, and keywords (name of features)
-load('DATA_amazon\amazon_data');
-%The following line loads sparse parameters learned by CV and also theta_star 
-% and P_gamma leaned by using all the data (ground truth).
-load('DATA_amazon\cv_results');
 
 %data parameters
 num_features       = size(X_all,2);
@@ -27,7 +30,6 @@ z_star_gt = zeros(num_features,1);
 z_star_gt(P_gamma>=decision_threshold) = 1;  %relevant features
 z_star_gt(P_gamma<=1-decision_threshold) = 0; %non-relevant features 
 z_star_gt(P_gamma<decision_threshold & P_gamma>1-decision_threshold) = -1; %"don't know" features 
-z_star  = z_star_gt;
 
 %simulation parameters
 num_iterations   = 100; %total number of user feedback
@@ -50,16 +52,20 @@ METHODS_ED = {
      'False',  'Max(90% UCB,90% LCB)'; 
      'True',  'Uniformly random';
      'True', 'random on the relevelant features';
-     'True', 'max variance';
+     'False', 'max variance';
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
-     'True',  'Expected information gain (post_pred)';
-     'False',  'Expected information gain (post_pred), fast approx'
+     'False',  'Expected information gain (post_pred)';
+     'True',  'Expected information gain (post_pred), fast approx' %Only available for MODE = 2?
      };
 METHODS_AL = {
      'True',  'AL:Uniformly random';
-     'True',  'AL: Expected information gain'
+     'False',  'AL: Expected information gain'
+     }; 
+ METHODS_GT = {
+     'True',  'Ground truth - all data';
+     'True',  'Ground truth - all feedback'
      }; 
 Method_list_ED = [];
 for m = 1:size(METHODS_ED,1)
@@ -73,14 +79,18 @@ for m = 1:size(METHODS_AL,1)
         Method_list_AL = [Method_list_AL,METHODS_AL(m,2)];
     end
 end
-Method_list = [Method_list_ED,Method_list_AL];
+Method_list_GT = [];
+for m = 1:size(METHODS_GT,1)
+    if strcmp(METHODS_GT(m,1),'True')
+        Method_list_GT = [Method_list_GT,METHODS_GT(m,2)];
+    end
+end
+Method_list = [Method_list_GT, Method_list_ED, Method_list_AL];
 num_methods = size(Method_list,2); %number of decision making methods that we want to consider
 %% Main algorithm
 Loss_1 = zeros(num_methods, num_iterations, num_runs);
 Loss_2 = zeros(num_methods, num_iterations, num_runs);
 Loss_3 = zeros(num_methods, num_iterations, num_runs);
-Loss_4 = zeros(num_methods, num_iterations, num_runs);
-
 decisions = zeros(num_methods, num_iterations, num_runs); 
 tic
 for run = 1:num_runs
@@ -117,33 +127,59 @@ for run = 1:num_runs
     z_star_user(posterior.p<=1-model_params.P_user) = 0; %non-relevant features 
     z_star_user(posterior.p<model_params.P_user & posterior.p>1-model_params.P_user) = -1; %"don't know" features 
     
-    %if feedback is on relevance of features then remove constant features (no added information)
-    if MODE == 2 
-        theta_star_user = theta_star_user(non_const_features);
-        z_star_user = z_star_user(non_const_features);
-        z_star = z_star_gt(non_const_features);
-    end
-
-    %% main algorithms (ED and AL)
+    %% main algorithms (ED, AL, and GT)
     for method_num = 1:num_methods
         method_name = Method_list(method_num);
         %% restart the variables
         x_train = X_train;
         x_test  = X_test;
         y_train = Y_train;
+        theta_star_user_temp = theta_star_user;
+        z_star_user_temp = z_star_user;
+        z_star_gt_temp = z_star_gt;
         %for AL methods and for ED when MODE ~= 0,1, remove all const features
         if MODE == 2 || ~isempty(find(strcmp(Method_list_AL, method_name), 1))
             %remove the all constant features from the training and test data
             x_train = X_train(non_const_features,:);
             x_test  = X_test(non_const_features,:);
             x_user  = X_user(non_const_features,:);
+        end
+        %if feedback is on relevance of features then remove constant features (no added information)
+        if MODE == 2
+            theta_star_user_temp = theta_star_user(non_const_features);
+            z_star_user_temp = z_star_user(non_const_features);
+            z_star_gt_temp = z_star_gt(non_const_features);
         end   
         %Feedback = values (1st column) and indices (2nd column) of user feedback
         Feedback = [];            %only used in experimental design methdos
         %selected_data = indices of data selected by active learning from X_user and Y_user
         selected_data = [];       %only used in active learning methods
         sparse_options.si = [];   % carry prior site terms between interactions
-
+        %% Calculate ground truth solutions
+        if find(strcmp(Method_list_GT, method_name))
+            if find(strcmp('Ground truth - all data', method_name))
+                %calculate the posterior based on all train+user data 
+                posterior = calculate_posterior([X_train, X_user], [Y_train; Y_user], Feedback, ...
+                    model_params, MODE, sparse_params, sparse_options);
+            end
+            if find(strcmp('Ground truth - all feedback', method_name))
+                %calculate the posterior based on all feedbacks
+                for feature_index = 1:size(X_train,1)
+                    new_fb_value = user_feedback(feature_index, theta_star_user, z_star_user, MODE, model_params);
+                    Feedback = [Feedback; new_fb_value , feature_index];
+                end
+                 posterior = calculate_posterior(X_train, Y_train, Feedback, ...
+                    model_params, MODE, sparse_params, sparse_options);                                            
+            end
+            Y_hat = X_test'*posterior.mean;
+            Y_hat = Y_hat .* y_std + y_mean;
+            [mse,log_pp_test,log_pp_train] = calculate_loss(X_train,Y_train, posterior, ...
+                X_test, Y_hat, Y_test, model_params);
+            Loss_1(method_num, :, run) = mse;
+            Loss_2(method_num, :, run) = log_pp_test;
+            Loss_3(method_num, :, run) = log_pp_train;
+            continue
+        end
         %% User interaction
         for it = 1:num_iterations %number of user feedback
             %calculate the posterior based on training + feedback until now
@@ -151,31 +187,25 @@ for run = 1:num_runs
             sparse_options.si = posterior.si;
             %% calculate different loss functions
             % transform predictions back to the original scale
-            yhat = x_test'*posterior.mean;
-            yhat = yhat .* y_std + y_mean; 
-            Loss_1(method_num, it, run) = mean((yhat - Y_test).^2); %MSE
-%             %Distance to user weights
-%             Loss_2(method_num, it, run) = mean((posterior.mean-theta_star_user).^2);     
-            %log of posterior predictive dist as the loss function for test data
-            post_pred_var = diag(x_test'*posterior.sigma*x_test) + model_params.Nu_y^2;
-            log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((yhat - Y_test).^2)./(2*post_pred_var);
-            Loss_3(method_num, it, run) =  mean(log_post_pred);
-            %log of posterior predictive dist as the loss function for training data
-            post_pred_var = diag(x_train'*posterior.sigma*x_train) + model_params.Nu_y^2;
-            log_post_pred = -log(sqrt(2*pi*post_pred_var)) - ((x_train'*posterior.mean - y_train).^2)./(2*post_pred_var);
-            Loss_4(method_num, it, run) = mean(log_post_pred);
+            Y_hat = x_test'*posterior.mean;
+            Y_hat = Y_hat .* y_std + y_mean;             
+            [mse,log_pp_test,log_pp_train] = calculate_loss(x_train, y_train, posterior, ...
+                x_test, Y_hat, Y_test, model_params);
+            Loss_1(method_num, it, run) = mse;
+            Loss_2(method_num, it, run) = log_pp_test;
+            Loss_3(method_num, it, run) = log_pp_train;
             %% If ED: make a decision based on ED decision policy
             if find(strcmp(Method_list_ED, method_name))
-                feature_index = decision_policy(posterior, method_name, z_star, x_train, y_train,...
+                feature_index = decision_policy(posterior, method_name, z_star_gt_temp, x_train, y_train,...
                     Feedback, model_params, MODE, sparse_params, sparse_options);               
                 if MODE == 2
                     %save the true feature index (consider the removed features too)
-                    decisions(method_num, it, run) = find(cumsum(non_const_features)==feature_index);
+                    decisions(method_num, it, run) = find(cumsum(non_const_features)==feature_index,1);
                 else
                     decisions(method_num, it, run) = feature_index;
                 end
                 %simulate user feedback
-                new_fb_value = user_feedback(feature_index, theta_star_user, z_star_user, MODE, model_params);
+                new_fb_value = user_feedback(feature_index, theta_star_user_temp, z_star_user_temp, MODE, model_params);
                 Feedback = [Feedback; new_fb_value , feature_index];
             end
             %% If AL: add a new data point based on AL decision policy 
@@ -201,6 +231,6 @@ for run = 1:num_runs
 end
 %% averaging and plotting
 z_star = z_star_gt;
-save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'model_params', ...
+save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', ...
     'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
 evaluate_results

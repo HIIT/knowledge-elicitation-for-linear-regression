@@ -25,23 +25,23 @@ title('Loss function')
 xlabel('number of expert feedbacks')
 ylabel('Loss value (X-test*theta - Y-test)')
 
+% % figure
+% % plot(mean(Loss_2,3)','.-');
+% % legend(Method_list)
+% % title('Loss function')
+% % xlabel('number of expert feedbacks')
+% % ylabel('Loss value (theta - theta*)')
+
+
 figure
 plot(mean(Loss_2,3)','.-');
-legend(Method_list)
-title('Loss function')
-xlabel('number of expert feedbacks')
-ylabel('Loss value (theta - theta*)')
-
-
-figure
-plot(mean(Loss_3,3)','.-');
 legend(Method_list)
 title('Utility function')
 xlabel('number of expert feedbacks')
 ylabel('Utility value (log(posterior predictive))')
 
 figure
-plot(mean(Loss_4,3)','.-');
+plot(mean(Loss_3,3)','.-');
 legend(Method_list)
 title('Utility function')
 xlabel('number of expert feedbacks')

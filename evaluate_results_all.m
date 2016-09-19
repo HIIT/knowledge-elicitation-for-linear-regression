@@ -26,7 +26,7 @@ disp(['Data normalization method: ', num2str(normalization_method),'.']);
 disp(['Averaged over ', num2str(num_runs), ' runs']);
 
 
-for loss_function = 1:4     
+for loss_function = 1:3     
     if loss_function == 1
         loss = Loss_1;
     end
@@ -35,9 +35,6 @@ for loss_function = 1:4
     end
     if loss_function == 3
         loss = Loss_3;
-    end
-    if loss_function == 4
-        loss = Loss_4;
     end    
     
     if size(num_trainingdata,2) == 1
@@ -55,7 +52,8 @@ for loss_function = 1:4
         min_val = min(heat_map(:));
         max_val = max(heat_map(:));
         for method = 1:num_methods
-            subplot(2,2,method) 
+            subplot(3,3,method) 
+%             figure
             imagesc(heat_map(:,:,method), [min_val,max_val]);
             axis xy
             title(Method_list(method))
@@ -87,7 +85,8 @@ for loss_function = 1:4
         min_val = min(heat_map(:));
         max_val = max(heat_map(:));
         for method = 1:num_methods
-            subplot(2,2,method) 
+            subplot(3,3,method) 
+%             figure
             imagesc(heat_map(:,:,method), [min_val,max_val]);
             axis xy
             title(Method_list(method))
