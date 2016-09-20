@@ -3,7 +3,7 @@
 3. DONE ---- user feedback in the real data case should be created using a seperate set of data (not training or test).
 4. Check the normalization of X_all and Y_all in all the main scripts and use main_amazon as model for them.
 5. LATER---- Re-visit candi scripts and update them based on new edits.
-6. Add non-sequential methods in the decision_policy function for better comparison.
+6. DONE ---- Add non-sequential methods in the decision_policy function for better comparison.
 7. Add comparisons to previous non-sparse methods we considered.
 8. Other product category (for instance, amazon books reviews). 
 9. DONE for YELP ----Other datasets (still sparse, still easy to interpret). Some possibilities: hotel ratings (Tripadvisor), Rate-My-Professor.

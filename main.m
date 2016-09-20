@@ -18,7 +18,7 @@ num_nonzero_features = 10;  % features that are nonzero
 
 %Algorithm parameters
 num_iterations = 100;  %total number of user feedback
-num_runs       = 10;  %total number of runs (necessary for averaging results)
+num_runs       = 100;  %total number of runs (necessary for averaging results)
 
 %model parameters
 normalization_method = 1; %normalization method for generating the data (Xs)
@@ -35,16 +35,18 @@ METHODS_ED = {
      'False',  'Max(90% UCB,90% LCB)'; 
      'True',  'Uniformly random';
      'True', 'random on the relevelant features';
-     'True', 'max variance';
+     'False', 'max variance';
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
-     'False',  'Expected information gain (post_pred)';
-     'True',  'Expected information gain (post_pred), fast approx' %Only available for MODE = 2?
+     'False',  'Expected information gain (post-pred)';
+     'False',  'Expected information gain (post-pred), non-sequential';
+     'False',  'Expected information gain (post-pred), fast approx'; %Only available for MODE = 2?
+     'True',  'Expected information gain (post-pred), fast approx, non-sequential' %Only available for MODE = 2?
      };
 METHODS_AL = {
      'True',  'AL:Uniformly random';
-     'False',  'AL: Expected information gain'
+     'True',  'AL: Expected information gain'
      }; 
 METHODS_GT = { %these are non-sequential methods
      'True',  'Ground truth - all data';
@@ -100,7 +102,7 @@ for run = 1:num_runs
         if find(strcmp(Method_list_GT, method_name))
             if find(strcmp('Ground truth - all data', method_name))
                 %calculate the posterior based on all train+user data 
-                posterior = calculate_posterior([X_train, X_user], [Y_train; Y_user], Feedback, ...
+                posterior = calculate_posterior([X_train, X_user], [Y_train; Y_user], [], ...
                     model_params, MODE, sparse_params, sparse_options);
             end
             if find(strcmp('Ground truth - all feedback', method_name))
@@ -120,6 +122,13 @@ for run = 1:num_runs
             Loss_3(method_num, :, run) = log_pp_train;
             continue
         end
+        %% for non-sequential ED methods find the suggested queries before user interaction
+        if strfind(char(method_name),'non-sequential')
+            posterior = calculate_posterior(X_train, Y_train, [], model_params, MODE, sparse_params, sparse_options);
+            %find non-sequential order of features to be queried from the user
+            non_seq_feature_indices = decision_policy(posterior, method_name, z_star, X_train, Y_train, ...
+                [], model_params, MODE, sparse_params, sparse_options);
+        end
         %% User interaction
         for it = 1:num_iterations %number of user feedback
             %calculate the posterior based on training + feedback until now
@@ -135,8 +144,14 @@ for run = 1:num_runs
             Loss_3(method_num, it, run) = log_pp_train;
             %% If ED: make a decision based on ED decision policy
             if find(strcmp(Method_list_ED, method_name))
-                feature_index = decision_policy(posterior, method_name, z_star, X_train, Y_train, ...
-                    Feedback, model_params, MODE, sparse_params, sparse_options);
+                %for non-sequential methods, use the saved order
+                if strfind(char(method_name),'non-sequential')
+                    feature_index = non_seq_feature_indices(it);
+                else
+                    %for sequential methods find the next decision based on feedback until now
+                    feature_index = decision_policy(posterior, method_name, z_star, X_train, Y_train, ...
+                        Feedback, model_params, MODE, sparse_params, sparse_options);
+                end
                 decisions(method_num, it, run) = feature_index;
                 %simulate user feedback
                 new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);

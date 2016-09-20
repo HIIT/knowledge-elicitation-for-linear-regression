@@ -147,8 +147,8 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
 
         end
 
-
-        if strcmp(Method_name,'Expected information gain (post_pred)') 
+        %for sequential and non-sequential case
+        if  strfind(char(Method_name),'Expected information gain (post_pred)') 
             %information gain is the KL-divergence of the posterior_predictive 
             %of the data after and before the user feedback. 
             %the expectation is taken over the posterior predictive of user feedback. 
@@ -192,8 +192,15 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
     %                             
     %             Utility(j) = sum(part1 + part2_numerator./part2_denumerator - 0.5);                          
     %         end
-
-            [~,selected_feature]= max(Utility);   
+    
+            if strfind(char(Method_name),'non-sequential')
+                %for non-sequential case
+                %sort the utility function and send all indices
+                [~,selected_feature] = sort(Utility,'descend');
+            else
+                %for sequential case
+                [~,selected_feature] = max(Utility);
+            end  
         end
         
     end
@@ -254,7 +261,8 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
               
         end
         
-        if strcmp(Method_name,'Expected information gain (post_pred), fast approx')
+        %for sequential and non-sequential case
+        if strfind(char(Method_name),'Expected information gain (post_pred), fast approx')
             % information gain is the KL-divergence of the posterior_predictive
             % of the data after and before the user feedback.
             % the expectation is taken over the posterior predictive of user feedback.
@@ -284,7 +292,16 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
             if ~isempty(Feedback)
                 Utility(Feedback(:,2)) = -inf;
             end
-            [~,selected_feature] = max(Utility);
+            
+            if strfind(char(Method_name),'non-sequential')
+                %for non-sequential case
+                %sort the utility function and send all indices
+                [~,selected_feature] = sort(Utility,'descend');
+            else
+                %for sequential case
+                [~,selected_feature] = max(Utility);
+            end
+            
         end
     end
 end
