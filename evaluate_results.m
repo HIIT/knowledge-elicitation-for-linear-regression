@@ -10,6 +10,12 @@ num_runs = size(decisions,3);
 
 %display useful information about the simulation
 disp(struct2table(model_params));
+if MODE == 1
+    disp('Feedback is on the weight value of features');
+end
+if MODE == 2
+    disp('Feedback is on the relevance of features');
+end
 disp(['Number of features: ', num2str(num_features),'.']);
 disp(['Number of "relevant" features: ', num2str(sum(z_star==1)),'.']);
 disp(['Number of "do not know" features: ', num2str(sum(z_star==-1)),'.']);
