@@ -11,14 +11,14 @@ MODE = 2;
 
 %data parameters for simulation data
 num_features         = 100; % total number of features
-num_trainingdata     = 5;   % number of training samples
+num_trainingdata     = 30;   % number of training samples
 num_userdata         = 500; %data that will be used in active learning
 num_data             = 500 + num_trainingdata + num_userdata; % total number of data (training and test)
 num_nonzero_features = 10;  % features that are nonzero
 
 %Algorithm parameters
 num_iterations = 100;  %total number of user feedback
-num_runs       = 100;  %total number of runs (necessary for averaging results)
+num_runs       = 20;  %total number of runs (necessary for averaging results)
 
 %model parameters
 normalization_method = 1; %normalization method for generating the data (Xs)
@@ -39,10 +39,10 @@ METHODS_ED = {
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
-     'False',  'Expected information gain (post-pred)';
-     'False',  'Expected information gain (post-pred), non-sequential';
-     'False',  'Expected information gain (post-pred), fast approx'; %Only available for MODE = 2?
-     'True',  'Expected information gain (post-pred), fast approx, non-sequential' %Only available for MODE = 2?
+     'False',  'Expected information gain (post_pred)';
+     'False',  'Expected information gain (post_pred), non-sequential';
+     'True',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
+     'True',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
      };
 METHODS_AL = {
      'True',  'AL:Uniformly random';
