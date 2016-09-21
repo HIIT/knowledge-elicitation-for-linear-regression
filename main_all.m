@@ -11,17 +11,17 @@ MODE = 2;
 
 %data parameters for simulation data
 num_features             = 100; %[start,step,max] This can be a set of values (e.g. 1:100) or just one value (e.g. 100)
-num_trainingdata         = 5:20:100; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
+num_trainingdata         = 2:1:30; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
 num_userdata             = 500; %data that will be used in active learning
 max_num_nonzero_features = 10; % maximum number of features that are nonzero --- AKA sparsity measure
 
 %Algorithm parameters
 num_iterations = 50; %total number of user feedback
-num_runs       = 50; %total number of runs (necessary for averaging results) 
+num_runs       = 100; %total number of runs (necessary for averaging results) 
 
 %model parameters
-normalization_method = 1; %normalization method for generating the data (Xs)
-model_params   = struct('Nu_y',0.1, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, 'simulated_data', 1);
+normalization_method = 3; %normalization method for generating the data (Xs)
+model_params   = struct('Nu_y',1, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, 'simulated_data', 1);
 sparse_options = struct('damp',0.8, 'damp_decay',0.95, 'robust_updates',2, 'verbosity',0, 'max_iter',1000, 'threshold',1e-5, 'min_site_prec',1e-6);
 sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2,'p_u', model_params.P_user);
 %% METHOD LIST
@@ -30,20 +30,22 @@ METHODS_ED = {
      'False',  'Max(90% UCB,90% LCB)'; 
      'True',  'Uniformly random';
      'True', 'random on the relevelant features';
-     'True', 'max variance';
+     'False', 'max variance';
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
      'False',  'Expected information gain (post_pred)';
-     'True',  'Expected information gain (post_pred), fast approx' %Only available for MODE = 2?
+     'False',  'Expected information gain (post_pred), non-sequential';
+     'True',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
+     'True',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
      };
 METHODS_AL = {
-     'True',  'AL:Uniformly random';
+     'False',  'AL:Uniformly random';
      'False',  'AL: Expected information gain'
      }; 
 METHODS_GT = { %these are non-sequential methods
-     'True',  'Ground truth - all data';
-     'True',  'Ground truth - all feedback'
+     'False',  'Ground truth - all data';
+     'False',  'Ground truth - all feedback'
      }; 
 Method_list_ED = [];
 for m = 1:size(METHODS_ED,1)
@@ -123,6 +125,13 @@ for n_f = 1:size(num_features,2);
                     Loss_3(method_num, :, run, n_f ,n_t) = log_pp_train;
                     continue
                 end   
+                %% for non-sequential ED methods find the suggested queries before user interaction
+                if strfind(char(method_name),'non-sequential')
+                    posterior = calculate_posterior(X_train, Y_train, [], model_params, MODE, sparse_params, sparse_options);
+                    %find non-sequential order of features to be queried from the user
+                    non_seq_feature_indices = decision_policy(posterior, method_name, z_star, X_train, Y_train, ...
+                        [], model_params, MODE, sparse_params, sparse_options);
+                end
                 %% User interaction
                 for it = 1:num_iterations %number of user feedback
                     %calculate the posterior based on training + feedback until now
@@ -138,8 +147,14 @@ for n_f = 1:size(num_features,2);
                     Loss_3(method_num, it, run, n_f ,n_t) = log_pp_train;
                     %% If ED: make a decision based on ED decision policy
                     if find(strcmp(Method_list_ED, method_name))
-                        feature_index = decision_policy(posterior, method_name, z_star, X_train, Y_train, ...
-                            Feedback, model_params, MODE, sparse_params, sparse_options);
+                        %for non-sequential methods, use the saved order
+                        if strfind(char(method_name),'non-sequential')
+                            feature_index = non_seq_feature_indices(it);
+                        else
+                            %for sequential methods find the next decision based on feedback until now
+                            feature_index = decision_policy(posterior, method_name, z_star, X_train, Y_train, ...
+                                Feedback, model_params, MODE, sparse_params, sparse_options);
+                        end
                         decisions(method_num, it, run, n_f ,n_t) = feature_index;
                         %simulate user feedback
                         new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
