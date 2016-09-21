@@ -57,7 +57,9 @@ METHODS_ED = {
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
      'False',  'Expected information gain (post_pred)';
-     'True',  'Expected information gain (post_pred), fast approx' %Only available for MODE = 2?
+     'False',  'Expected information gain (post_pred), non-sequential';
+     'True',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
+     'True',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
      };
 METHODS_AL = {
      'True',  'AL:Uniformly random';
@@ -180,6 +182,13 @@ for run = 1:num_runs
             Loss_3(method_num, :, run) = log_pp_train;
             continue
         end
+        %% for non-sequential ED methods find the suggested queries before user interaction
+        if strfind(char(method_name),'non-sequential')
+            posterior = calculate_posterior(x_train, y_train, [], model_params, MODE, sparse_params, sparse_options);
+            %find non-sequential order of features to be queried from the user
+            non_seq_feature_indices = decision_policy(posterior, method_name, z_star_gt_temp, x_train, y_train, ...
+                [], model_params, MODE, sparse_params, sparse_options);
+        end
         %% User interaction
         for it = 1:num_iterations %number of user feedback
             %calculate the posterior based on training + feedback until now
@@ -196,8 +205,14 @@ for run = 1:num_runs
             Loss_3(method_num, it, run) = log_pp_train;
             %% If ED: make a decision based on ED decision policy
             if find(strcmp(Method_list_ED, method_name))
-                feature_index = decision_policy(posterior, method_name, z_star_gt_temp, x_train, y_train,...
-                    Feedback, model_params, MODE, sparse_params, sparse_options);               
+                %for non-sequential methods, use the saved order
+                if strfind(char(method_name),'non-sequential')
+                    feature_index = non_seq_feature_indices(it);
+                else
+                    %for sequential methods find the next decision based on feedback until now
+                    feature_index = decision_policy(posterior, method_name, z_star_gt_temp, x_train, y_train,...
+                        Feedback, model_params, MODE, sparse_params, sparse_options);
+                end             
                 if MODE == 2
                     %save the true feature index (consider the removed features too)
                     decisions(method_num, it, run) = find(cumsum(non_const_features)==feature_index,1);
