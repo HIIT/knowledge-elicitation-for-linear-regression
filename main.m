@@ -11,18 +11,18 @@ MODE = 2;
 
 %data parameters for simulation data
 num_features         = 100; % total number of features
-num_trainingdata     = 30;   % number of training samples
+num_trainingdata     = 10;   % number of training samples
 num_userdata         = 500; %data that will be used in active learning
 num_data             = 500 + num_trainingdata + num_userdata; % total number of data (training and test)
 num_nonzero_features = 10;  % features that are nonzero
 
 %Algorithm parameters
 num_iterations = 100;  %total number of user feedback
-num_runs       = 20;  %total number of runs (necessary for averaging results)
+num_runs       = 100;  %total number of runs (necessary for averaging results)
 
 %model parameters
-normalization_method = 1; %normalization method for generating the data (Xs)
-model_params   = struct('Nu_y',0.1, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, ...
+normalization_method = 3; %normalization method for generating the data (Xs)
+model_params   = struct('Nu_y',1, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, ...
     'P_zero', num_nonzero_features/num_features,  'simulated_data', 1);
 sparse_options = struct('damp',0.8, 'damp_decay',0.95, 'robust_updates',2, 'verbosity',0, ...
     'max_iter',1000, 'threshold',1e-5, 'min_site_prec',1e-6);
