@@ -1,7 +1,7 @@
 clear all
 close all
 
-load('results')
+load('results_user_exp')
 
 
 num_methods = size(Method_list,2);
@@ -35,13 +35,28 @@ title('Loss function')
 xlabel('number of expert feedbacks')
 ylabel('Loss value (X-test*theta - Y-test)')
 
-% % figure
-% % plot(mean(Loss_2,3)','.-');
-% % legend(Method_list)
-% % title('Loss function')
-% % xlabel('number of expert feedbacks')
-% % ylabel('Loss value (theta - theta*)')
 
+ground_truth_all_feedback = find(strcmp('Ground truth - all feedback', Method_list));
+if ground_truth_all_feedback
+    figure
+    hold on
+    for user =1:num_users
+        ave_loss = mean(Loss_1(:,:,:,user),3);
+        percentage_improvement = zeros(num_methods, num_iterations);
+        for method =1: num_methods
+            all_feedback_gt = ave_loss(ground_truth_all_feedback,1);
+            percentage_improvement(method,:) = 1 - (ave_loss(method,:) - all_feedback_gt)./(ave_loss(method,1) - all_feedback_gt);
+        end
+        percentage_improvement(ground_truth_all_feedback,:) = [];
+        plot(percentage_improvement','.-');
+    end
+    Method_list_temp = Method_list;
+    Method_list_temp(ground_truth_all_feedback) = [];
+    legend(Method_list_temp)
+    title('Loss function')
+    xlabel('number of expert feedbacks')
+    ylabel('Percentage of improvememt in MSE')
+end
 
 figure
 hold on
@@ -86,8 +101,10 @@ for user =1:num_users
     ave_binary_decisions = mean(binary_decisions(:,:,:,user),3);
     acccumulated_ave_binary_decisions = cumsum(ave_binary_decisions,2);
     acccumulated_ave_binary_decisions = acccumulated_ave_binary_decisions ./ repmat([1:num_iterations],num_methods,1);
+%     acccumulated_ave_binary_decisions(ground_truth_all_feedback,:) = [];
     plot(acccumulated_ave_binary_decisions','.-');   
 end
+% legend(Method_list_temp)
 legend(Method_list)
 title('Accumulated average suggestion behavior of each method')
 xlabel('number of expert feedbacks')

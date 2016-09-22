@@ -249,6 +249,6 @@ for run = 1:num_runs
 end
 %% averaging and plotting
 z_star = z_star_gt;
-save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', ...
+save('results_user_exp', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', ...
     'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
 evaluate_results_user_experiments
