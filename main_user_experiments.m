@@ -11,6 +11,14 @@ load('DATA_amazon\amazon_data');
 load('DATA_amazon\cv_results');
 % load('DATA_yelp\cv_results');
 
+%% Let the algortihm learns the parameters 
+%(comment the folloing lines if you want to use the CV results)
+sparse_params.sigma2_prior = true;
+sparse_params.sigma2_a  = 1;
+sparse_params.sigma2_b  = 1;
+sparse_params.rho_prior = true;
+sparse_params.rho_a = 1;
+sparse_params.rho_b = 1;
 %% load user feedback from the user experiments
 load('DATA_amazon\User Study\z_star_user_exp');
 num_users = size(z_star_user_exp,1);
