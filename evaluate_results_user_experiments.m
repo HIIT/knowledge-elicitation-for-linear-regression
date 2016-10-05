@@ -27,12 +27,12 @@ disp(['Averaged over ', num2str(num_runs), ' runs.']);
 
 figure
 hold on
-MSE_without_feedback = mean(mean(Loss_1(num_methods,1,:,1)));
-plot([1,num_iterations],MSE_without_feedback*[1,1],'k-');
 for user =1:num_users
     plot(mean(Loss_1(:,:,:,user),3)','.-');
 end   
-legend(['Baseline: No user feedback',Method_list])
+MSE_without_feedback = mean(mean(Loss_1(num_methods,1,:,1)));
+plot([1,num_iterations],MSE_without_feedback*[1,1],'k-');
+legend([Method_list,'Baseline: No user feedback'])
 title('Loss function')
 xlabel('number of expert feedbacks')
 ylabel('Loss value (X-test*theta - Y-test)')
@@ -47,7 +47,8 @@ if ground_truth_all_feedback
         percentage_improvement = zeros(num_methods, num_iterations);
         for method =1: num_methods
             all_feedback_gt = ave_loss(ground_truth_all_feedback,1);
-            percentage_improvement(method,:) = 100* (1 - (ave_loss(method,:) - all_feedback_gt)./(ave_loss(method,1) - all_feedback_gt));
+%             percentage_improvement(method,:) = 100* (1 - (ave_loss(method,:) - all_feedback_gt)./(ave_loss(method,1) - all_feedback_gt));
+            percentage_improvement(method,:) = 100* (ave_loss(method,1) - ave_loss(method,:))./(ave_loss(method,1) - all_feedback_gt);
         end
         percentage_improvement(ground_truth_all_feedback,:) = [];
         plot(percentage_improvement','.-');
@@ -155,7 +156,7 @@ end
 legend(Method_list)
 title('Accumulated average suggestion behavior of each method')
 xlabel('number of expert feedbacks')
-ylabel('0 means not-relevant or "do not know" features, 1 means relevant features')
+ylabel('0 means "not-relevant" or "uncertain" keywords, 1 means "relevant" keywords')
 
 % %show the histogram of decisions
 % for method =1 : num_methods
