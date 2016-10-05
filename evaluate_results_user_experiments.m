@@ -27,10 +27,12 @@ disp(['Averaged over ', num2str(num_runs), ' runs.']);
 
 figure
 hold on
+MSE_without_feedback = mean(mean(Loss_1(num_methods,1,:,1)));
+plot([1,num_iterations],MSE_without_feedback*[1,1],'k-');
 for user =1:num_users
     plot(mean(Loss_1(:,:,:,user),3)','.-');
 end   
-legend(Method_list)
+legend(['Baseline: No user feedback',Method_list])
 title('Loss function')
 xlabel('number of expert feedbacks')
 ylabel('Loss value (X-test*theta - Y-test)')
@@ -45,7 +47,7 @@ if ground_truth_all_feedback
         percentage_improvement = zeros(num_methods, num_iterations);
         for method =1: num_methods
             all_feedback_gt = ave_loss(ground_truth_all_feedback,1);
-            percentage_improvement(method,:) = 1 - (ave_loss(method,:) - all_feedback_gt)./(ave_loss(method,1) - all_feedback_gt);
+            percentage_improvement(method,:) = 100* (1 - (ave_loss(method,:) - all_feedback_gt)./(ave_loss(method,1) - all_feedback_gt));
         end
         percentage_improvement(ground_truth_all_feedback,:) = [];
         plot(percentage_improvement','.-');
@@ -57,6 +59,51 @@ if ground_truth_all_feedback
     xlabel('number of expert feedbacks')
     ylabel('Percentage of improvememt in MSE')
 end
+%% check if the results are better than random suggestions
+%find random recommender index
+method_index_rnd = find(strcmp('Uniformly random', Method_list));
+method_index_ours = find(strcmp('Expected information gain (post_pred), fast approx', Method_list));
+P_values = zeros(num_iterations,num_users);
+CIs = zeros(num_iterations,num_users,2);
+for user =1:num_users
+    hold on
+    for iteration = 1:num_iterations
+        %exteract method results over all runs
+        runs_rand = Loss_1(method_index_rnd,iteration,:,user);
+        runs_ours = Loss_1(method_index_ours,iteration,:,user);
+        runs_rand = reshape(runs_rand,[1,num_runs]);
+        runs_ours = reshape(runs_ours,[1,num_runs]);
+%         figure
+%         hist([runs_ours;runs_rand]'); 
+        %[h,p,ci,stats] = ttest2(runs_rand,runs_ours);
+        [h,p,ci,stats] = ttest(runs_rand,runs_ours);
+        P_values(iteration,user) = p;
+        CIs(iteration,user,:) = ci;
+    end
+end
+figure
+plot(P_values,'.-');
+title('Two-sample t-test for each participants (random vs Info. gain suggestions)')
+xlabel('number of expert feedbacks')
+ylabel('P-value')
+
+figure
+plot(-log10(P_values),'.-');
+title('Two-sample t-test for each participants (random vs Info. gain suggestions) (5% significance level)')
+xlabel('number of expert feedbacks')
+ylabel('-Log 10 (P-value)')
+
+figure
+hold on
+plot(CIs(:,:,1));
+plot(CIs(:,:,2));
+plot([1,num_iterations],[0,0],'k-');
+hold off
+title('Confidence interval for the mean of MSE of (random - Info. gainx) for the paired t-test')
+xlabel('number of expert feedbacks')
+ylabel('random - Info. gain')
+%% 
+
 
 figure
 hold on
@@ -93,7 +140,7 @@ end
 legend(Method_list)
 title('Average suggestion behavior of each method')
 xlabel('number of expert feedbacks')
-ylabel('0 means zero or "do not know" features, 1 means relevant features')
+ylabel('0 means not-relevant or "do not know" features, 1 means relevant features')
 
 figure
 hold on
@@ -108,7 +155,7 @@ end
 legend(Method_list)
 title('Accumulated average suggestion behavior of each method')
 xlabel('number of expert feedbacks')
-ylabel('0 means zero or "do not know" features, 1 means relevant features')
+ylabel('0 means not-relevant or "do not know" features, 1 means relevant features')
 
 % %show the histogram of decisions
 % for method =1 : num_methods
