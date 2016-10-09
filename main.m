@@ -3,7 +3,7 @@ clear all
 RNG_SEED = rng;
 
 %% Parameters and Simulator setup
-MODE = 2; 
+MODE = 1; 
 % MODE specifies the  type of feedback and the model that we are using
 %           0: Feedback on weight values. Model: Gaussian prior 
 %           1: Feedback on weight values. Model: spike and slab prior
@@ -18,7 +18,7 @@ num_nonzero_features = 10;  % features that are nonzero
 
 %Algorithm parameters
 num_iterations = 100;  %total number of user feedback
-num_runs       = 100;  %total number of runs (necessary for averaging results)
+num_runs       = 200;  %total number of runs (necessary for averaging results)
 
 %model parameters
 normalization_method = 3; %normalization method for generating the data (Xs)
@@ -39,17 +39,17 @@ METHODS_ED = {
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
-     'False',  'Expected information gain (post_pred)';
-     'False',  'Expected information gain (post_pred), non-sequential';
-     'True',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
-     'True',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
+     'True',  'Expected information gain (post_pred)';
+     'True',  'Expected information gain (post_pred), non-sequential';
+     'False',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
+     'False',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
      };
 METHODS_AL = {
      'True',  'AL:Uniformly random';
-     'True',  'AL: Expected information gain'
+     'False',  'AL: Expected information gain'
      }; 
 METHODS_GT = { %these are non-sequential methods
-     'True',  'Ground truth - all data';
+     'False',  'Ground truth - all data';
      'True',  'Ground truth - all feedback'
      }; 
 Method_list_ED = [];
@@ -168,6 +168,6 @@ for run = 1:num_runs
     end
 end
 %% averaging and plotting
-save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', ...
+save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', 'sparse_options', ...
     'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
 evaluate_results

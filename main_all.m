@@ -11,7 +11,7 @@ MODE = 2;
 
 %data parameters for simulation data
 num_features             = 100; %[start,step,max] This can be a set of values (e.g. 1:100) or just one value (e.g. 100)
-num_trainingdata         = 2:1:30; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
+num_trainingdata         = 2:2:150; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
 num_userdata             = 500; %data that will be used in active learning
 max_num_nonzero_features = 10; % maximum number of features that are nonzero --- AKA sparsity measure
 
@@ -174,6 +174,6 @@ for n_f = 1:size(num_features,2);
 end
 
 %% averaging and plotting
-save('results_all', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', ...
+save('results_all', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', 'sparse_options', ...
     'z_star', 'Method_list', 'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
 evaluate_results_all
