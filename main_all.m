@@ -3,7 +3,7 @@ clear all
 RNG_SEED = rng;
 
 %% Parameters and Simulator setup 
-MODE = 2; 
+MODE = 1; 
 % MODE specifies the  type of feedback and the model that we are using
 %           0: Feedback on weight values. Model: Gaussian prior 
 %           1: Feedback on weight values. Model: spike and slab prior
@@ -11,7 +11,7 @@ MODE = 2;
 
 %data parameters for simulation data
 num_features             = 100; %[start,step,max] This can be a set of values (e.g. 1:100) or just one value (e.g. 100)
-num_trainingdata         = 2:2:150; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
+num_trainingdata         = 2:1:100; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
 num_userdata             = 500; %data that will be used in active learning
 max_num_nonzero_features = 10; % maximum number of features that are nonzero --- AKA sparsity measure
 
@@ -21,7 +21,7 @@ num_runs       = 100; %total number of runs (necessary for averaging results)
 
 %model parameters
 normalization_method = 3; %normalization method for generating the data (Xs)
-model_params   = struct('Nu_y',1, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, 'simulated_data', 1);
+model_params   = struct('Nu_y',1, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.95, 'simulated_data', 1);
 sparse_options = struct('damp',0.8, 'damp_decay',0.95, 'robust_updates',2, 'verbosity',0, 'max_iter',1000, 'threshold',1e-5, 'min_site_prec',1e-6);
 sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_theta^2 ,'eta2',model_params.Nu_user^2,'p_u', model_params.P_user);
 %% METHOD LIST
@@ -29,15 +29,15 @@ sparse_params  = struct('sigma2',model_params.Nu_y^2, 'tau2', model_params.Nu_th
 METHODS_ED = {     
      'False',  'Max(90% UCB,90% LCB)'; 
      'True',  'Uniformly random';
-     'True', 'random on the relevelant features';
+     'False', 'random on the relevelant features';
      'False', 'max variance';
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
-     'False',  'Expected information gain (post_pred)';
+     'True',  'Expected information gain (post_pred)';
      'False',  'Expected information gain (post_pred), non-sequential';
-     'True',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
-     'True',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
+     'False',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
+     'False',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
      };
 METHODS_AL = {
      'False',  'AL:Uniformly random';
@@ -174,6 +174,6 @@ for n_f = 1:size(num_features,2);
 end
 
 %% averaging and plotting
-save('results_all', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', 'sparse_options', ...
+save('results_all', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', 'sparse_options', 'sparse_params', ...
     'z_star', 'Method_list', 'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
 evaluate_results_all
