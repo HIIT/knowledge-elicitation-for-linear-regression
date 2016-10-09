@@ -3,15 +3,15 @@ clear all
 RNG_SEED = rng;
 
 %% Parameters and Simulator setup 
-MODE = 1; 
+MODE = 2; 
 % MODE specifies the  type of feedback and the model that we are using
 %           0: Feedback on weight values. Model: Gaussian prior 
 %           1: Feedback on weight values. Model: spike and slab prior
 %           2: Feedback on relevance of features. Model: spike and slab prior
 
 %data parameters for simulation data
-num_features             = 100; %[start,step,max] This can be a set of values (e.g. 1:100) or just one value (e.g. 100)
-num_trainingdata         = 2:1:100; %[start,step,max] This can be a set of values (e.g. 1:10:500) or just one value (e.g. 5)
+num_features             = 12:2:200; %[start,step,max] This can be a set of values (e.g. 1:100) or just one value (e.g. 100)
+num_trainingdata         = 10; %[start,step,max] This can be a set of values (e.g. 2:1:100) or just one value (e.g. 5)
 num_userdata             = 500; %data that will be used in active learning
 max_num_nonzero_features = 10; % maximum number of features that are nonzero --- AKA sparsity measure
 
@@ -34,9 +34,9 @@ METHODS_ED = {
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
-     'True',  'Expected information gain (post_pred)';
+     'False',  'Expected information gain (post_pred)';
      'False',  'Expected information gain (post_pred), non-sequential';
-     'False',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
+     'True',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
      'False',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
      };
 METHODS_AL = {
