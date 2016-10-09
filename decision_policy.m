@@ -31,7 +31,8 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
     if strcmp(Method_name,'Uniformly random') 
         selected_feature = ceil(rand*num_features);
         
-        if MODE == 2 && size(Feedback,1)~= 0           
+%         if MODE == 2 && size(Feedback,1)~= 0  %in the paper we ask once for both mode=1 and 2         
+        if size(Feedback,1)~= 0  
             %ask about each feature only once
             remains = setdiff(1:num_features,Feedback(:,2));
             if size(remains,2) ~= 0
@@ -43,8 +44,15 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
     
     %randomly choose one of the relevant features (oracle decision maker)
     if strcmp(Method_name,'random on the relevelant features') 
-        relevants = find(z_star == 1);        
+        relevants = find(z_star == 1)';        
         selected_feature = relevants(ceil(rand*size(relevants,1)));
+        if size(Feedback,1)~= 0
+            %ask about each feature only once
+            remains = setdiff(relevants,Feedback(:,2));
+            if size(remains,2) ~= 0
+                selected_feature = remains(ceil(rand*size(remains,2)));
+            end
+        end
     end
     
     
@@ -193,6 +201,13 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
     %             Utility(j) = sum(part1 + part2_numerator./part2_denumerator - 0.5);                          
     %         end
     
+            % ask about each feature only once (note: one must not ask for more feedbacks than the number of features
+            % or this will start giving 1 always) 
+            %- THIS NOT VERU TRUE FOR MODE =1. However, it is how we defined the decision making in the paper
+            if ~isempty(Feedback)
+                Utility(Feedback(:,2)) = -inf;
+            end    
+            
             if strfind(char(Method_name),'non-sequential')
                 %for non-sequential case
                 %sort the utility function and send all indices
