@@ -11,6 +11,14 @@ load('DATA_amazon\amazon_data');
 load('DATA_amazon\cv_results');
 % load('DATA_yelp\cv_results');
 
+%% Let the algortihm learns the parameters 
+%(comment the folloing lines if you want to use the CV results)
+% sparse_params.sigma2_prior = true;
+% sparse_params.sigma2_a  = 1;
+% sparse_params.sigma2_b  = 1;
+% sparse_params.rho_prior = true;
+% sparse_params.rho_a = 1;
+% sparse_params.rho_b = 1;
 %% Parameters and data setup
 MODE = 2; 
 % MODE specifies the  type of feedback and the model that we are using
@@ -246,6 +254,6 @@ for run = 1:num_runs
 end
 %% averaging and plotting
 z_star = z_star_gt;
-save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', ...
+save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', 'sparse_options','sparse_params', ...
     'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
 evaluate_results
