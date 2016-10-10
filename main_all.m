@@ -3,7 +3,7 @@ clear all
 RNG_SEED = rng;
 
 %% Parameters and Simulator setup 
-MODE = 2; 
+MODE = 1; 
 % MODE specifies the  type of feedback and the model that we are using
 %           0: Feedback on weight values. Model: Gaussian prior 
 %           1: Feedback on weight values. Model: spike and slab prior
@@ -34,9 +34,9 @@ METHODS_ED = {
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
-     'False',  'Expected information gain (post_pred)';
+     'True',  'Expected information gain (post_pred)';
      'False',  'Expected information gain (post_pred), non-sequential';
-     'True',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
+     'False',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
      'False',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
      };
 METHODS_AL = {
