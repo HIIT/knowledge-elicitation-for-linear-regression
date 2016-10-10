@@ -4,12 +4,12 @@ RNG_SEED = rng;
 
 %% Load the proper dataset
 %The following line loads X_all, Y_all, and keywords (name of features)
-load('DATA_amazon\amazon_data');
-% load('DATA_yelp\yelp_academic_data');
+% load('DATA_amazon\amazon_data');
+load('DATA_yelp\yelp_academic_data_clean_from2006_100app');
 %The following line loads sparse parameters learned by CV and also theta_star 
 % and P_gamma leaned by using all the data (ground truth).
-load('DATA_amazon\cv_results');
-% load('DATA_yelp\cv_results');
+% load('DATA_amazon\cv_results');
+load('DATA_yelp\cv_results');
 
 %% Let the algortihm learns the parameters 
 %(comment the following lines if you want to use the CV results)
