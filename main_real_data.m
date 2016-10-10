@@ -12,11 +12,11 @@ load('DATA_amazon\cv_results');
 % load('DATA_yelp\cv_results');
 
 %% Let the algortihm learns the parameters 
-%(comment the folloing lines if you want to use the CV results)
-% sparse_params.sigma2_prior = true;
-% sparse_params.sigma2_a  = 1;
-% sparse_params.sigma2_b  = 1;
-% sparse_params.rho_prior = true;
+%(comment the following lines if you want to use the CV results)
+sparse_params.sigma2_prior = true;
+sparse_params.sigma2_a  = 1;
+sparse_params.sigma2_b  = 1;
+sparse_params.rho_prior = false;
 % sparse_params.rho_a = 1;
 % sparse_params.rho_b = 1;
 %% Parameters and data setup
@@ -40,8 +40,8 @@ z_star_gt(P_gamma<=1-decision_threshold) = 0; %non-relevant features
 z_star_gt(P_gamma<decision_threshold & P_gamma>1-decision_threshold) = -1; %"don't know" features 
 
 %simulation parameters
-num_iterations   = 100; %total number of user feedback
-num_runs         = 10;   %total number of runs (necessary for averaging results)
+num_iterations   = 200; %total number of user feedback
+num_runs         = 50;   %total number of runs (necessary for averaging results)
 
 %things that have not been used (since we do not simulate the data)
 normalization_method  = -1; % (NOT USED HERE)
