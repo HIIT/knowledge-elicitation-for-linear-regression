@@ -71,7 +71,7 @@ METHODS_ED = {
      };
 METHODS_AL = {
      'True',  'AL:Uniformly random';
-     'False',  'AL: Expected information gain'
+     'True',  'AL: Expected information gain'
      }; 
  METHODS_GT = {
      'True',  'Ground truth - all data';
