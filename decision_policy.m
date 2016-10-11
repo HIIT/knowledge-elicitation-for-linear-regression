@@ -73,7 +73,9 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
     
     % If the feedback is on the value of features
     if MODE == 0 || MODE == 1
-        
+        %TODO: use also residual_var instead of model_params.Nu_user^2 for MODE = 1
+        %(it was not important in the paper since Mode=1 is used for only
+        %simulations (where the parameters are the same as data generation method)
  
         if strcmp(Method_name,'Bayes experiment design') 
             %TODO: We do not need to call the calculate posterior function here

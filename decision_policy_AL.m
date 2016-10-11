@@ -9,6 +9,12 @@ function [ new_selected_data ] = decision_policy_AL(posterior, Method_name, X_tr
 
     num_features   = size(X_train,1);
     num_user_data  = size(X_user,2); 
+
+    if (MODE == 1 || MODE == 2) && isfield(sparse_params, 'sigma2_prior') && sparse_params.sigma2_prior
+        residual_var = 1 / posterior.fa.sigma2.imean;
+    else
+        residual_var = model_params.Nu_y^2;
+    end
     
     %randomly choose one the data points from _user data
     if strcmp(Method_name,'AL:Uniformly random') 
@@ -36,26 +42,11 @@ function [ new_selected_data ] = decision_policy_AL(posterior, Method_name, X_tr
         xTsigmax = sum(X_user .* sigmax, 1)';
         
         
-        alpha = 1 + xTsigmax ./ model_params.Nu_y^2;
+        alpha = 1 + xTsigmax ./ residual_var;
         Utility = log(alpha) + (1 ./ alpha - 1) + ...
-            (alpha - 1) ./ (alpha.^2 * model_params.Nu_y^4) .* (xTsigmax + model_params.Nu_y^2);
+            (alpha - 1) ./ (alpha.^2 * residual_var^2) .* (xTsigmax + residual_var);
         Utility(selected_data) = -inf;
-        
-%         %This is the older (and slower) version of the above code.
-%         %I did not delete it because it also works for the case where "s" is not a basis vector.
-%         Utility = zeros(num_user_data,1);
-%         for j=1: num_user_data
-%             %if the data has been selected before, ignore it
-%             if ismember(j,selected_data)
-%                 Utility(j) = -inf;
-%                 continue
-%             end
-%             x = X_user(:,j);
-%             xTsigmax = x'*posterior.sigma*x;
-%             alpha = 1 + model_params.Nu_y^(-2) * xTsigmax;
-%             Utility(j) = log(alpha) + (1/alpha -1) + ...
-%                 (alpha-1)/(alpha^2 * model_params.Nu_y^4) * (xTsigmax + model_params.Nu_y^2 );
-%         end       
+           
 
         [~,new_selected_data]= max(Utility);
         
