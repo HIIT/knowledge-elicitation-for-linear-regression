@@ -10,7 +10,7 @@ function [ new_selected_data ] = decision_policy_AL(posterior, Method_name, X_tr
     num_features   = size(X_train,1);
     num_user_data  = size(X_user,2); 
 
-    if (MODE == 1 || MODE == 2) && isfield(sparse_params, 'sigma2_prior') && sparse_params.sigma2_prior
+    if isfield(sparse_params, 'sigma2_prior') && sparse_params.sigma2_prior
         residual_var = 1 / posterior.fa.sigma2.imean;
     else
         residual_var = model_params.Nu_y^2;
