@@ -16,9 +16,9 @@ load('DATA_amazon\cv_results');
 sparse_params.sigma2_prior = true;
 sparse_params.sigma2_a  = 1;
 sparse_params.sigma2_b  = 1;
-sparse_params.rho_prior = true;
-sparse_params.rho_a = 1;
-sparse_params.rho_b = 1;
+sparse_params.rho_prior = false;
+% % sparse_params.rho_a = 1;
+% % sparse_params.rho_b = 1;
 %% load user feedback from the user experiments
 load('DATA_amazon\User Study\z_star_user_exp');
 num_users = size(z_star_user_exp,1);
@@ -37,7 +37,7 @@ num_userdata       = num_data-1000;       %data that will be used to train simul
 num_trainingdata   = 100;                 %training data
 
 % define z_star_gt in a meaningful way (ground truth of all data)
-decision_threshold = 0.9; %this should be on [0.5,1). 
+decision_threshold = 0.7; %this should be on [0.5,1). 
 z_star_gt = zeros(num_features,1);
 z_star_gt(P_gamma>=decision_threshold) = 1;  %relevant features
 z_star_gt(P_gamma<=1-decision_threshold) = 0; %non-relevant features 
@@ -45,7 +45,7 @@ z_star_gt(P_gamma<decision_threshold & P_gamma>1-decision_threshold) = -1; %"don
 
 %simulation parameters
 num_iterations   = 200; %total number of user feedback
-num_runs         = 50;   %total number of runs (necessary for averaging results)
+num_runs         = 20;   %total number of runs (necessary for averaging results)
 
 %things that have not been used (since we do not simulate the data)
 normalization_method  = -1; % (NOT USED HERE)
@@ -257,6 +257,6 @@ for run = 1:num_runs
 end
 %% averaging and plotting
 z_star = z_star_gt;
-save('results_user_exp', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', ...
+save('results_user_exp', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', 'sparse_options', 'sparse_params', ...
     'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
 evaluate_results_user_experiments
