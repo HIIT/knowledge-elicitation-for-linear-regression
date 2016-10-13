@@ -30,13 +30,11 @@ figure
 Loss_1_mean = mean(Loss_1,3)';
 hold on
 % %This one is for the legend, it should be removed after fixing the legends
-% ticks = 20;
+% ticks = 10;
 % plot(1:ticks:num_iterations,Loss_1_mean(1:ticks:end,:),'-s','LineWidth',2);
-% legend({'GT','GT','Random', 'Random on the relevant features (Oracle)', ...
-%     'Sequential Experimental Design', 'Non-sequential Experimental Design','AL','AL'},'FontSize',14)
-% legend boxoff
+% % legend boxoff
 % %This one is for the markers
-% plot(1:ticks:num_iterations,Loss_1_mean(1:10:end,:),'s','LineWidth',2);
+% plot(1:ticks:num_iterations,Loss_1_mean(1:ticks:end,:),'s','LineWidth',2);
 %This one is the data
 plot(Loss_1_mean,'.-','LineWidth',2);
 legend(Method_list)
@@ -45,14 +43,8 @@ title('Loss function')
 xlabel('Number of Expert Feedback','FontSize',16)
 ylabel('Mean Squared Error','FontSize',16)
 % ylabel('Loss value (X-test*theta - Y-test)','FontSize',16)
-
-% % figure
-% % plot(mean(Loss_2,3)','.-');
-% % legend(Method_list)
-% % title('Loss function')
-% % xlabel('number of expert feedbacks')
-% % ylabel('Loss value (theta - theta*)')
-
+% legend({'GT','Random', 'Random on the relevant features', ...
+%     'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
 
 figure
 plot(mean(Loss_2,3)','.-','LineWidth',2);
@@ -73,14 +65,11 @@ if exist('Loss_4')
     figure
     Loss_4_mean = mean(Loss_4,3)';
     hold on
-    % %This one is for the legend, it should be removed after fixing the legends
-    % ticks = 20;
-    % plot(1:ticks:num_iterations,Loss_4_mean(1:ticks:end,:),'-s','LineWidth',2);
-    % legend({'GT','GT','Random', 'Random on the relevant features (Oracle)', ...
-    %     'Sequential Experimental Design', 'Non-sequential Experimental Design','AL','AL'},'FontSize',14)
-    % legend boxoff
-    % %This one is for the markers
-    % plot(1:ticks:num_iterations,Loss_4_mean(1:10:end,:),'s','LineWidth',2);
+%     %This one is for the legend, it should be removed after fixing the legends
+%     plot(1:ticks:num_iterations,Loss_4_mean(1:ticks:end,:),'-s','LineWidth',2);
+%     % legend boxoff
+%     %This one is for the markers
+%     plot(1:ticks:num_iterations,Loss_4_mean(1:ticks:end,:),'s','LineWidth',2);
     %This one is the data
     plot(Loss_4_mean,'.-','LineWidth',2);
     legend(Method_list)
@@ -88,6 +77,8 @@ if exist('Loss_4')
     title('Loss function')
     xlabel('Number of Expert Feedback','FontSize',16)
     ylabel('Mean Squared Error on Training','FontSize',16)
+%     legend({'GT','Random', 'Random on the relevant features', ...
+%         'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
 end
 
 %divide the decisions in two groups:  0. non-relevant features 1. relevant features
@@ -104,11 +95,20 @@ xlabel('Number of Expert Feedback','FontSize',16)
 ylabel('0 means zero or "do not know" features, 1 means relevant features','FontSize',16)
 
 acccumulated_ave_binary_decisions = cumsum(ave_binary_decisions,2);
-acccumulated_ave_binary_decisions = acccumulated_ave_binary_decisions ./ repmat([1:num_iterations],num_methods,1);
+acccumulated_ave_binary_decisions = [acccumulated_ave_binary_decisions ./ repmat([1:num_iterations],num_methods,1)]';
 
 figure
-plot(acccumulated_ave_binary_decisions','.-','LineWidth',2);
+hold on
+% %This one is for the legend, it should be removed after fixing the legends
+% plot(1:ticks:num_iterations,acccumulated_ave_binary_decisions(1:ticks:end,:),'-s','LineWidth',2);
+% % legend boxoff
+% %This one is for the markers
+% plot(1:ticks:num_iterations,acccumulated_ave_binary_decisions(1:ticks:end,:),'s','LineWidth',2);
+%This one is the data
+plot(acccumulated_ave_binary_decisions,'.-','LineWidth',2);
 legend(Method_list)
+% legend({'GT','Random', 'Random on the relevant features', ...
+%     'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
 title('Accumulated average suggestion behavior of each method')
 xlabel('Number of Expert Feedback','FontSize',16)
 ylabel('0 means zero or "do not know" features, 1 means relevant features','FontSize',16)

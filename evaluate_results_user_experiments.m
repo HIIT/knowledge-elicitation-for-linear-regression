@@ -27,15 +27,16 @@ disp(['Averaged over ', num2str(num_runs), ' runs.']);
 
 figure
 hold on
+MSE_without_feedback = mean(mean(Loss_1(num_methods,1,:,1)));
+plot([1,num_iterations],MSE_without_feedback*[1,1],'k-');
 for user =1:num_users
     plot(mean(Loss_1(:,:,:,user),3)','.-');
 end   
-MSE_without_feedback = mean(mean(Loss_1(num_methods,1,:,1)));
-plot([1,num_iterations],MSE_without_feedback*[1,1],'k-');
-legend([Method_list,'Baseline: No user feedback'])
+legend(['Baseline (No user feedback)', Method_list])
 title('Loss function')
-xlabel('number of expert feedbacks')
-ylabel('Loss value (X-test*theta - Y-test)')
+xlabel('Number of User Feedback','FontSize',16)
+ylabel('Mean Squared Error','FontSize',16)
+% ylabel('Loss value (X-test*theta - Y-test)')
 
 
 ground_truth_all_feedback = find(strcmp('Ground truth - all feedback', Method_list));
@@ -57,8 +58,9 @@ if ground_truth_all_feedback
     Method_list_temp(ground_truth_all_feedback) = [];
     legend(Method_list_temp)
     title('Loss function')
-    xlabel('number of expert feedbacks')
-    ylabel('Percentage of improvememt in MSE')
+    xlabel('Number of User Feedback','FontSize',16)
+    ylabel('Percentage of Improvememt in MSE','FontSize',16)
+    grid on
 end
 %% check if the results are better than random suggestions
 %find random recommender index
@@ -66,6 +68,7 @@ method_index_rnd = find(strcmp('Uniformly random', Method_list));
 method_index_ours = find(strcmp('Expected information gain (post_pred), fast approx', Method_list));
 P_values = zeros(num_iterations,num_users);
 CIs = zeros(num_iterations,num_users,2);
+hs = zeros(num_iterations,num_users); 
 for user =1:num_users
     hold on
     for iteration = 1:num_iterations
@@ -80,6 +83,7 @@ for user =1:num_users
         [h,p,ci,stats] = ttest(runs_rand,runs_ours);
         P_values(iteration,user) = p;
         CIs(iteration,user,:) = ci;
+        hs(iteration,user) = h;
     end
 end
 figure
@@ -87,6 +91,9 @@ plot(P_values,'.-');
 title('Two-sample t-test for each participants (random vs Info. gain suggestions)')
 xlabel('number of expert feedbacks')
 ylabel('P-value')
+
+[~, significant_thrsholds] = max(hs);
+disp(['Difference between metods is significant after ', num2str(max(significant_thrsholds)-1),' feedback.']);
 
 figure
 plot(-log10(P_values),'.-');
@@ -155,7 +162,7 @@ end
 % legend(Method_list_temp)
 legend(Method_list)
 title('Accumulated average suggestion behavior of each method')
-xlabel('number of expert feedbacks')
+xlabel('Number of User Feedback')
 ylabel('0 means "not-relevant" or "uncertain" keywords, 1 means "relevant" keywords')
 
 % %show the histogram of decisions

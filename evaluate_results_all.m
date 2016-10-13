@@ -55,16 +55,19 @@ for loss_function = 1:3
                 heat_map(:,f_index,method) = temp(method,:)'; %create a heatmap for each method
             end
         end
+        temp_num_features = num_features;
         min_val = min(heat_map(:));
         max_val = max(heat_map(:));
         for method = 1:num_methods
-            subplot(3,3,method) 
+            subplot(2,1,method) 
 %             figure
             imagesc(heat_map(:,:,method), [min_val,max_val]);
             axis xy
-            title(Method_list(method))
-            xlabel('number of dimensions')
-            ylabel('number of expert feedbacks')
+            title(Method_list(method),'FontSize',16)
+            set(gca, 'XTick', 1:floor(length(temp_num_features)/10):length(temp_num_features)); % Change x-axis ticks
+            set(gca, 'XTickLabel', temp_num_features(1:floor(length(temp_num_features)/10):length(temp_num_features))); % Change x-axis ticks labels.
+            xlabel('number of dimensions','FontSize',16)
+            ylabel('number of expert feedbacks','FontSize',16)
         %     pcolor(heat_map(:,:,method))
         %     colormap(gray)     
         %     colorbar();
@@ -84,22 +87,22 @@ for loss_function = 1:3
             end
         end
         temp_num_trainingdata = num_trainingdata;
-%         %(optional) remove some parts of the figure -  next three lines
-%         remove_first_k_iteration=2;
+        %(optional) remove some parts of the figure -  next three lines
+%         remove_first_k_iteration=3;
 %         heat_map(:,1:remove_first_k_iteration,:) = []; 
 %         temp_num_trainingdata = num_trainingdata(remove_first_k_iteration+1:size(num_trainingdata,2));
         min_val = min(heat_map(:));
         max_val = max(heat_map(:));
         for method = 1:num_methods
-            subplot(3,3,method) 
+            subplot(2,1,method) 
 %             figure
             imagesc(heat_map(:,:,method), [min_val,max_val]);
             axis xy
-            title(Method_list(method))
-            xlabel('number of training data')
-            set(gca, 'XTick', 1:floor(length(temp_num_trainingdata)/5):length(temp_num_trainingdata)); % Change x-axis ticks
-            set(gca, 'XTickLabel', temp_num_trainingdata(1:floor(length(temp_num_trainingdata)/5):length(temp_num_trainingdata))); % Change x-axis ticks labels.        
-            ylabel('number of expert feedbacks')    
+            title(Method_list(method),'FontSize',16)
+            xlabel('number of training data','FontSize',16)
+            set(gca, 'XTick', 1:floor(length(temp_num_trainingdata)/20):length(temp_num_trainingdata)); % Change x-axis ticks
+            set(gca, 'XTickLabel', temp_num_trainingdata(1:floor(length(temp_num_trainingdata)/20):length(temp_num_trainingdata))); % Change x-axis ticks labels.        
+            ylabel('number of expert feedbacks','FontSize',16)    
         %     pcolor(heat_map(:,:,method))            
         %     colormap(gray)     
         %     colorbar();
