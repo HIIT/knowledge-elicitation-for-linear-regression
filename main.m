@@ -3,7 +3,7 @@ clear all
 RNG_SEED = rng;
 
 %% Parameters and Simulator setup
-MODE = 1; 
+MODE = 2; 
 % MODE specifies the  type of feedback and the model that we are using
 %           0: Feedback on weight values. Model: Gaussian prior 
 %           1: Feedback on weight values. Model: spike and slab prior
@@ -22,7 +22,7 @@ num_runs       = 200;  %total number of runs (necessary for averaging results)
 
 %model parameters
 normalization_method = 3; %normalization method for generating the data (Xs)
-model_params   = struct('Nu_y',1, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.99, ...
+model_params   = struct('Nu_y',1, 'Nu_theta', 1, 'Nu_user', 0.1, 'P_user', 0.95, ...
     'P_zero', num_nonzero_features/num_features,  'simulated_data', 1);
 sparse_options = struct('damp',0.8, 'damp_decay',0.95, 'robust_updates',2, 'verbosity',0, ...
     'max_iter',1000, 'threshold',1e-5, 'min_site_prec',1e-6);
@@ -39,13 +39,13 @@ METHODS_ED = {
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
      'False', 'Bayes experiment design (tr.ref)';
-     'True',  'Expected information gain (post_pred)';
-     'True',  'Expected information gain (post_pred), non-sequential';
-     'False',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
-     'False',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
+     'False',  'Expected information gain (post_pred)';
+     'False',  'Expected information gain (post_pred), non-sequential';
+     'True',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
+     'True',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
      };
 METHODS_AL = {
-     'True',  'AL:Uniformly random';
+     'False',  'AL:Uniformly random';
      'False',  'AL: Expected information gain'
      }; 
 METHODS_GT = { %these are non-sequential methods
@@ -73,9 +73,10 @@ end
 Method_list = [Method_list_GT, Method_list_ED, Method_list_AL];
 num_methods = size(Method_list,2); %number of decision making methods that we want to consider
 %% Main
-Loss_1 = zeros(num_methods, num_iterations, num_runs);
-Loss_2 = zeros(num_methods, num_iterations, num_runs);
-Loss_3 = zeros(num_methods, num_iterations, num_runs);
+Loss_1 = zeros(num_methods, num_iterations, num_runs); % MSE on test
+Loss_2 = zeros(num_methods, num_iterations, num_runs); % LPP on test
+Loss_3 = zeros(num_methods, num_iterations, num_runs); % LPP on train
+Loss_4 = zeros(num_methods, num_iterations, num_runs); % MSE on train
 decisions = zeros(num_methods, num_iterations, num_runs); 
 tic
 for run = 1:num_runs 
@@ -115,11 +116,12 @@ for run = 1:num_runs
                     model_params, MODE, sparse_params, sparse_options);                                            
             end
             Y_hat = X_test'*posterior.mean;
-            [mse,log_pp_test,log_pp_train] = calculate_loss(X_train,Y_train, posterior, ...
+            [mse,log_pp_test,log_pp_train, mse_train] = calculate_loss(X_train,Y_train, posterior, ...
                 X_test, Y_hat, Y_test, model_params);
             Loss_1(method_num, :, run) = mse;
             Loss_2(method_num, :, run) = log_pp_test;
             Loss_3(method_num, :, run) = log_pp_train;
+            Loss_4(method_num, :, run) = mse_train;
             continue
         end
         %% for non-sequential ED methods find the suggested queries before user interaction
@@ -137,11 +139,12 @@ for run = 1:num_runs
             sparse_options.si = posterior.si;
             %% calculate different loss functions
             Y_hat = X_test'*posterior.mean;
-            [mse,log_pp_test,log_pp_train] = calculate_loss(X_train,Y_train, posterior, ...
+            [mse,log_pp_test,log_pp_train,mse_train] = calculate_loss(X_train,Y_train, posterior, ...
                 X_test, Y_hat, Y_test, model_params);
             Loss_1(method_num, it, run) = mse; 
             Loss_2(method_num, it, run) = log_pp_test;
             Loss_3(method_num, it, run) = log_pp_train;
+            Loss_4(method_num, it, run) = mse_train;
             %% If ED: make a decision based on ED decision policy
             if find(strcmp(Method_list_ED, method_name))
                 %for non-sequential methods, use the saved order
@@ -168,6 +171,6 @@ for run = 1:num_runs
     end
 end
 %% averaging and plotting
-save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', 'sparse_options', ...
+save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'decisions', 'model_params', 'sparse_options', 'sparse_params', ...
     'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
 evaluate_results
