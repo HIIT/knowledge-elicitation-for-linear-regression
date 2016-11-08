@@ -432,6 +432,21 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
             
             [~,selected_feature] = max(Utility);
         end
+        
+        if strfind(char(Method_name),'Max posterior inclusion probability')
+            % Choose the feature that has the largest posterior inclusion
+            % probability (and has not been given feedback yet).
+            
+            Utility = posterior.p;
+            
+            % ask about each feature only once (note: one must not ask for more feedbacks than the number of features
+            % or this will start giving 1 always)
+            if ~isempty(Feedback)
+                Utility(Feedback(:,2)) = -inf;
+            end
+            
+            [~,selected_feature] = max(Utility);
+        end
     end
 end
 
