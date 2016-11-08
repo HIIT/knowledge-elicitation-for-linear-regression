@@ -320,6 +320,118 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
             end
             
         end
+        
+        if strfind(char(Method_name),'LPD, fast approx')
+            pr = sparse_params;
+            op = sparse_options;
+            op.damp = 1; % don't damp updates?
+            
+            % feedback predictive distribution:
+            post_pred_f0 = model_params.P_user + posterior.p - 2 * model_params.P_user * posterior.p;
+            
+            % LPDs
+            lpd_0 = compute_post_pred_ld(0, posterior, pr, op, X, model_params);
+            lpd_1 = compute_post_pred_ld(1, posterior, pr, op, X, model_params);
+      
+            Utility = post_pred_f0 .* lpd_0 + (1 - post_pred_f0) .* lpd_1;
+            
+            % ask about each feature only once (note: one must not ask for more feedbacks than the number of features
+            % or this will start giving 1 always)
+            if ~isempty(Feedback)
+                Utility(Feedback(:,2)) = -inf;
+            end
+            
+            [~,selected_feature] = max(Utility);
+        end
+
+        if strfind(char(Method_name),'Thompson f, fast approx')
+            % This version samples from the predictive distribution of
+            % feedbacks (one sample) and uses that to weight the LPDs and
+            % chooses the feedback that gives the highest LPD.
+            
+            pr = sparse_params;
+            op = sparse_options;
+            op.damp = 1; % don't damp updates?
+            
+            % feedback predictive distribution:
+            post_pred_f0 = model_params.P_user + posterior.p - 2 * model_params.P_user * posterior.p;
+            f0 = rand(length(post_pred_f0), 1) < post_pred_f0;
+            
+            % LPDs
+            lpd_0 = compute_post_pred_ld(0, posterior, pr, op, X, model_params);
+            lpd_1 = compute_post_pred_ld(1, posterior, pr, op, X, model_params);
+      
+            Utility = f0 .* lpd_0 + (1 - f0) .* lpd_1;
+            
+            % ask about each feature only once (note: one must not ask for more feedbacks than the number of features
+            % or this will start giving 1 always)
+            if ~isempty(Feedback)
+                Utility(Feedback(:,2)) = -inf;
+            end
+            
+            [~,selected_feature] = max(Utility);
+        end
+        
+        if strfind(char(Method_name),'Thompson f2, fast approx')
+            % This version samples from the predictive distribution of
+            % feedbacks (multiple samples) and estimates the probabilities
+            % that each feature would give the highest LPD and then samples
+            % the actual feedback from there.
+            
+            pr = sparse_params;
+            op = sparse_options;
+            op.damp = 1; % don't damp updates?
+            
+            % feedback predictive distribution:
+            post_pred_f0 = model_params.P_user + posterior.p - 2 * model_params.P_user * posterior.p;
+            f0 = bsxfun(@lt, rand(length(post_pred_f0), 10000), post_pred_f0);
+            
+            % LPDs
+            lpd_0 = compute_post_pred_ld(0, posterior, pr, op, X, model_params);
+            lpd_1 = compute_post_pred_ld(1, posterior, pr, op, X, model_params);
+            
+            % ask about each feature only once (note: one must not ask for more feedbacks than the number of features
+            % or this will start giving 1 always)
+            if ~isempty(Feedback)
+                lpd_0(Feedback(:,2)) = -inf;
+                lpd_1(Feedback(:,2)) = -inf;
+            end
+            
+            Utility = bsxfun(@times, f0, lpd_0) + bsxfun(@times, 1 - f0, lpd_1);
+            Utility = sum(bsxfun(@eq, Utility, max(Utility, [], 1)), 2);
+
+            selected_feature = datasample(1:length(Utility), 1, 'Weights', Utility);
+        end
+        
+        if strfind(char(Method_name),'Thompson, fast approx')
+            % This version samples from the predictive distribution of y in
+            % the current state (without including the new feedback) which
+            % might not make much sense.
+            % TODO: Now lpd_0 and lpd_1 use different samples! Would make
+            % more sense to use the same! (But still not might make too
+            % much sense.)
+            
+            pr = sparse_params;
+            op = sparse_options;
+            op.damp = 1; % don't damp updates?
+            
+            % feedback predictive distribution:
+            post_pred_f0 = model_params.P_user + posterior.p - 2 * model_params.P_user * posterior.p;
+            
+            % Thompson LPDs
+            lpd_0 = thompson_lpd(0, posterior, pr, op, X, model_params);
+            lpd_1 = thompson_lpd(1, posterior, pr, op, X, model_params);
+      
+            Utility = post_pred_f0 .* lpd_0 + (1 - post_pred_f0) .* lpd_1;
+            
+            % ask about each feature only once (note: one must not ask for more feedbacks than the number of features
+            % or this will start giving 1 always)
+            if ~isempty(Feedback)
+                Utility(Feedback(:,2)) = -inf;
+            end
+            
+            [~,selected_feature] = max(Utility);
+        end
     end
 end
 
@@ -368,5 +480,95 @@ part2_numerator = xTsigma_newx + residual_var + bsxfun(@times, sigmax, (posterio
 part2_denumerator = 2 * (xTsigmax + residual_var);
 
 kl = sum(part1 + bsxfun(@rdivide, part2_numerator , part2_denumerator) - 0.5, 2);
+
+end
+
+function lpd = compute_post_pred_ld(feedback, posterior, pr, op, X, model_params)
+
+sf = posterior.ep_subfunctions;
+
+m = length(posterior.p);
+fa = posterior.fa;
+si = posterior.si;
+
+pr.m = m;
+pr.p_u_nat = log(pr.p_u) - log1p(-pr.p_u);
+
+% EP updates
+ca_gf = sf.compute_bernoulli_lik_cavity(fa.gamma.p_nat, si.gamma_feedback);
+ti_gf = sf.compute_bernoulli_lik_tilt(ca_gf, pr, feedback * ones(m, 1));
+si.gamma_feedback = sf.update_bernoulli_lik_sites(si.gamma_feedback, ca_gf, ti_gf, op);
+fa = sf.compute_full_approximation_gamma(fa, si, pr);
+ca_prior = sf.compute_sns_prior_cavity(fa, si.w_prior, pr);
+ti_prior = sf.compute_sns_prior_tilt(ca_prior, pr);
+si.w_prior = sf.update_sns_prior_sites(si.w_prior, ca_prior, ti_prior, op);
+
+% changes in parameters
+delta_tau = si.w_prior.normal_tau - posterior.si.w_prior.normal_tau;
+%delta_mu = si.w_prior.normal_mu - posterior.si.w_prior.normal_mu;
+
+if isfield(pr, 'sigma2_prior') && pr.sigma2_prior
+    residual_var = 1 / posterior.fa.sigma2.imean;
+else
+    residual_var = model_params.Nu_y^2;
+end
+
+% LPD
+sigmax = posterior.sigma * X;
+xTsigmax = sum(X .* sigmax, 1);
+alpha = 1 + diag(posterior.sigma) .* delta_tau;
+xTsigma_newx = bsxfun(@minus, xTsigmax, bsxfun(@rdivide, sigmax.^2, alpha ./ delta_tau));
+
+lpd = -0.5 * sum(log(xTsigma_newx + residual_var), 2);
+
+end
+
+function lpd = thompson_lpd(feedback, posterior, pr, op, X, model_params)
+
+% slightly adapted Thompson sampling approach
+% sample ys from old posterior
+
+if isfield(pr, 'sigma2_prior') && pr.sigma2_prior
+    residual_var = 1 / posterior.fa.sigma2.imean;
+else
+    residual_var = model_params.Nu_y^2;
+end
+
+sigmax = posterior.sigma * X;
+xTsigmax = sum(X .* sigmax, 1);
+
+y = X' * posterior.mean + sqrt(xTsigmax' + residual_var) .* randn(size(X, 2), 1);
+
+
+sf = posterior.ep_subfunctions;
+
+m = length(posterior.p);
+fa = posterior.fa;
+si = posterior.si;
+
+pr.m = m;
+pr.p_u_nat = log(pr.p_u) - log1p(-pr.p_u);
+
+% EP updates
+ca_gf = sf.compute_bernoulli_lik_cavity(fa.gamma.p_nat, si.gamma_feedback);
+ti_gf = sf.compute_bernoulli_lik_tilt(ca_gf, pr, feedback * ones(m, 1));
+si.gamma_feedback = sf.update_bernoulli_lik_sites(si.gamma_feedback, ca_gf, ti_gf, op);
+fa = sf.compute_full_approximation_gamma(fa, si, pr);
+ca_prior = sf.compute_sns_prior_cavity(fa, si.w_prior, pr);
+ti_prior = sf.compute_sns_prior_tilt(ca_prior, pr);
+si.w_prior = sf.update_sns_prior_sites(si.w_prior, ca_prior, ti_prior, op);
+
+% changes in parameters
+delta_tau = si.w_prior.normal_tau - posterior.si.w_prior.normal_tau;
+delta_mu = si.w_prior.normal_mu - posterior.si.w_prior.normal_mu;
+
+% LPD
+% -0.5 * log(var) + -0.5 * (y - mean)^2 / var
+alpha = 1 + diag(posterior.sigma) .* delta_tau;
+xTsigma_newx = bsxfun(@minus, xTsigmax, bsxfun(@rdivide, sigmax.^2, alpha ./ delta_tau));
+vars = xTsigma_newx + residual_var;
+means = bsxfun(@minus, posterior.mean' * X, bsxfun(@times, (posterior.mean .* delta_tau - delta_mu) ./ alpha, sigmax)); 
+
+lpd = -0.5 * sum(log(vars) + bsxfun(@minus, y', means).^2 ./ vars, 2);
 
 end
