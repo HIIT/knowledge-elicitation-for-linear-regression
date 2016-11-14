@@ -30,7 +30,7 @@ figure
 Loss_1_mean = mean(Loss_1,3)';
 hold on
 % %This one is for the legend, it should be removed after fixing the legends
-% ticks = 10;
+% ticks = 20;
 % plot(1:ticks:num_iterations,Loss_1_mean(1:ticks:end,:),'-s','LineWidth',2);
 % % legend boxoff
 % %This one is for the markers
@@ -40,7 +40,7 @@ plot(Loss_1_mean,'.-','LineWidth',2);
 legend(Method_list)
 hold off
 title('Loss function')
-xlabel('Number of Expert Feedback','FontSize',16)
+xlabel('Number of Expert Feedbacks','FontSize',16)
 ylabel('Mean Squared Error','FontSize',16)
 % ylabel('Loss value (X-test*theta - Y-test)','FontSize',16)
 % legend({'GT','Random', 'Random on the relevant features', ...
@@ -50,14 +50,14 @@ figure
 plot(mean(Loss_2,3)','.-','LineWidth',2);
 legend(Method_list)
 title('Utility function')
-xlabel('Number of Expert Feedback','FontSize',16)
+xlabel('Number of Expert Feedbacks','FontSize',16)
 ylabel('Utility value (log(posterior predictive))','FontSize',16)
 
 figure
 plot(mean(Loss_3,3)','.-','LineWidth',2);
 legend(Method_list)
 title('Utility function')
-xlabel('Number of Expert Feedback','FontSize',16)
+xlabel('Number of Expert Feedbacks','FontSize',16)
 ylabel('Utility value (log(posterior predictive)) on tr.data','FontSize',16)
 
 
@@ -75,7 +75,7 @@ if exist('Loss_4')
     legend(Method_list)
     hold off
     title('Loss function')
-    xlabel('Number of Expert Feedback','FontSize',16)
+    xlabel('Number of Expert Feedbacks','FontSize',16)
     ylabel('Mean Squared Error on Training','FontSize',16)
 %     legend({'GT','Random', 'Random on the relevant features', ...
 %         'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
@@ -91,7 +91,7 @@ figure
 plot(ave_binary_decisions','.-','LineWidth',2);
 legend(Method_list)
 title('Average suggestion behavior of each method')
-xlabel('Number of Expert Feedback','FontSize',16)
+xlabel('Number of Expert Feedbacks','FontSize',16)
 ylabel('0 means zero or "do not know" features, 1 means relevant features','FontSize',16)
 
 acccumulated_ave_binary_decisions = cumsum(ave_binary_decisions,2);
@@ -110,7 +110,7 @@ legend(Method_list)
 % legend({'GT','Random', 'Random on the relevant features', ...
 %     'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
 title('Accumulated average suggestion behavior of each method')
-xlabel('Number of Expert Feedback','FontSize',16)
+xlabel('Number of Expert Feedbacks','FontSize',16)
 ylabel('0 means zero or "do not know" features, 1 means relevant features','FontSize',16)
 
 % %show the histogram of decisions

@@ -34,7 +34,7 @@ for user =1:num_users
 end   
 legend(['Baseline (No user feedback)', Method_list])
 title('Loss function')
-xlabel('Number of User Feedback','FontSize',16)
+xlabel('Number of User Feedbacks','FontSize',16)
 ylabel('Mean Squared Error','FontSize',16)
 % ylabel('Loss value (X-test*theta - Y-test)')
 
@@ -58,7 +58,7 @@ if ground_truth_all_feedback
     Method_list_temp(ground_truth_all_feedback) = [];
     legend(Method_list_temp)
     title('Loss function')
-    xlabel('Number of User Feedback','FontSize',16)
+    xlabel('Number of User Feedbacks','FontSize',16)
     ylabel('Percentage of Improvememt in MSE','FontSize',16)
     grid on
 end
@@ -66,26 +66,50 @@ end
 %find random recommender index
 method_index_rnd = find(strcmp('Uniformly random', Method_list));
 method_index_ours = find(strcmp('Expected information gain (post_pred), fast approx', Method_list));
+%this is the old statitistical test. Sami said it is no good!
 P_values = zeros(num_iterations,num_users);
 CIs = zeros(num_iterations,num_users,2);
 hs = zeros(num_iterations,num_users); 
-for user =1:num_users
-    hold on
-    for iteration = 1:num_iterations
-        %exteract method results over all runs
-        runs_rand = Loss_1(method_index_rnd,iteration,:,user);
-        runs_ours = Loss_1(method_index_ours,iteration,:,user);
-        runs_rand = reshape(runs_rand,[1,num_runs]);
-        runs_ours = reshape(runs_ours,[1,num_runs]);
-%         figure
-%         hist([runs_ours;runs_rand]'); 
-        %[h,p,ci,stats] = ttest2(runs_rand,runs_ours);
-        [h,p,ci,stats] = ttest(runs_rand,runs_ours);
-        P_values(iteration,user) = p;
-        CIs(iteration,user,:) = ci;
-        hs(iteration,user) = h;
-    end
+% for user =1:num_users
+%     hold on
+%     for iteration = 1:num_iterations
+%         %exteract method results over all runs
+%         runs_rand = Loss_1(method_index_rnd,iteration,:,user);
+%         runs_ours = Loss_1(method_index_ours,iteration,:,user);
+%         runs_rand = reshape(runs_rand,[1,num_runs]);
+%         runs_ours = reshape(runs_ours,[1,num_runs]);
+% %         figure
+% %         hist([runs_ours;runs_rand]'); 
+%         %[h,p,ci,stats] = ttest2(runs_rand,runs_ours);
+%         [h,p,ci,stats] = ttest(runs_rand,runs_ours);
+%         P_values(iteration,user) = p;
+%         CIs(iteration,user,:) = ci;
+%         hs(iteration,user) = h;
+%     end
+% end
+
+%% This part is about the new statistical test that Tomi suggested. 
+% We are only checking the difference between mean users 
+Ave_users_rand = zeros(num_iterations,num_users);
+Ave_users_ED = zeros(num_iterations,num_users);
+
+for user =1:num_users   
+    ave_over_runs= mean(Loss_1(:,:,:,user),3);
+    Ave_users_ED(:,user) = ave_over_runs(3,:);
+    Ave_users_rand(:,user) = ave_over_runs(2,:);
 end
+P_values = zeros(num_iterations,1);
+CIs = zeros(num_iterations,2);
+hs = zeros(num_iterations,1); 
+for iteration = 1:num_iterations
+    %exteract method results over all runs
+    [h,p,ci,stats] = ttest(Ave_users_rand(iteration,:),Ave_users_ED(iteration,:), 'Alpha',0.05/num_iterations);
+    P_values(iteration) = p;
+    CIs(iteration,:) = ci;
+    hs(iteration) = h;
+end
+[~, significant_thrsholds] = max(hs)
+
 figure
 plot(P_values,'.-');
 title('Two-sample t-test for each participants (random vs Info. gain suggestions)')
@@ -162,7 +186,7 @@ end
 % legend(Method_list_temp)
 legend(Method_list)
 title('Accumulated average suggestion behavior of each method')
-xlabel('Number of User Feedback')
+xlabel('Number of User Feedbacks')
 ylabel('0 means "not-relevant" or "uncertain" keywords, 1 means "relevant" keywords')
 
 % %show the histogram of decisions
