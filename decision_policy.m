@@ -45,7 +45,7 @@ function [ selected_feature ] = decision_policy( posterior , Method_name, z_star
     %randomly choose one of the relevant features at first and then start asking about random features (oracle decision maker)
     if strcmp(Method_name,'random on the relevelant features') 
         relevants = find(z_star == 1)';        
-        selected_feature = relevants(ceil(rand*size(relevants,1)));
+        selected_feature = relevants(ceil(rand*size(relevants,2)));
         if size(Feedback,1)~= 0
             %ask about each relevant feature only once
             remains_relevant = setdiff(relevants,Feedback(:,2));
