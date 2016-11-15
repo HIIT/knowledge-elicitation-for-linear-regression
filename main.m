@@ -17,7 +17,7 @@ num_data             = 500 + num_trainingdata + num_userdata; % total number of 
 num_nonzero_features = 10;  % features that are nonzero
 
 %Algorithm parameters
-num_iterations = 100;  %total number of user feedback
+num_iterations = 100 + 1;  %total number of user feedback
 num_runs       = 200;  %total number of runs (necessary for averaging results)
 
 %model parameters
@@ -152,17 +152,22 @@ for run = 1:num_runs
             Loss_3(method_num, it, run) = log_pp_train;
             Loss_4(method_num, it, run) = mse_train;
             %% If ED: make a decision based on ED decision policy
-            if find(strcmp(Method_list_ED, method_name))
-                %for non-sequential methods, use the saved order
+            if find(strcmp(Method_list_ED, method_name))               
                 if strfind(char(method_name),'non-sequential')
-                    feature_index = non_seq_feature_indices(it);
+                    %for non-sequential methods, use the saved order
+                    if it<=num_features                   
+                        feature_index = non_seq_feature_indices(it);
+                    else
+                        %suggest random feature if all feedbacks are already given 
+                        feature_index = ceil(rand*num_features);
+                    end
                 else
                     %for sequential methods find the next decision based on feedback until now
                     feature_index = decision_policy(posterior, method_name, z_star, X_train, Y_train, ...
                         Feedback, model_params, MODE, sparse_params, sparse_options);
                 end
                 decisions(method_num, it, run) = feature_index;
-                %simulate user feedback
+                %simulate user feedback (next line), or just read it from the saved array
                 %new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
                 Feedback = [Feedback; all_feedback(feature_index) , feature_index];
             end

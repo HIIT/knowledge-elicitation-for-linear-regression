@@ -31,12 +31,12 @@ Loss_1_mean = mean(Loss_1,3)';
 hold on
 % %This one is for the legend, it should be removed after fixing the legends
 % ticks = 20;
-% plot(1:ticks:num_iterations,Loss_1_mean(1:ticks:end,:),'-s','LineWidth',2);
+% plot(0:ticks:num_iterations-1,Loss_1_mean(1:ticks:end,:),'-s','LineWidth',2);
 % % legend boxoff
 % %This one is for the markers
-% plot(1:ticks:num_iterations,Loss_1_mean(1:ticks:end,:),'s','LineWidth',2);
+% plot(0:ticks:num_iterations-1,Loss_1_mean(1:ticks:end,:),'s','LineWidth',2);
 %This one is the data
-plot(Loss_1_mean,'.-','LineWidth',2);
+plot([0:num_iterations-1],Loss_1_mean,'.-','LineWidth',2);
 legend(Method_list)
 hold off
 title('Loss function')
@@ -47,14 +47,14 @@ ylabel('Mean Squared Error','FontSize',16)
 %     'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
 
 figure
-plot(mean(Loss_2,3)','.-','LineWidth',2);
+plot([0:num_iterations-1],mean(Loss_2,3)','.-','LineWidth',2);
 legend(Method_list)
 title('Utility function')
 xlabel('Number of Expert Feedbacks','FontSize',16)
 ylabel('Utility value (log(posterior predictive))','FontSize',16)
 
 figure
-plot(mean(Loss_3,3)','.-','LineWidth',2);
+plot([0:num_iterations-1],mean(Loss_3,3)','.-','LineWidth',2);
 legend(Method_list)
 title('Utility function')
 xlabel('Number of Expert Feedbacks','FontSize',16)
@@ -66,12 +66,12 @@ if exist('Loss_4')
     Loss_4_mean = mean(Loss_4,3)';
     hold on
 %     %This one is for the legend, it should be removed after fixing the legends
-%     plot(1:ticks:num_iterations,Loss_4_mean(1:ticks:end,:),'-s','LineWidth',2);
+%     plot(0:ticks:num_iterations-1,Loss_4_mean(1:ticks:end,:),'-s','LineWidth',2);
 %     % legend boxoff
 %     %This one is for the markers
-%     plot(1:ticks:num_iterations,Loss_4_mean(1:ticks:end,:),'s','LineWidth',2);
+%     plot(0:ticks:num_iterations-1,Loss_4_mean(1:ticks:end,:),'s','LineWidth',2);
     %This one is the data
-    plot(Loss_4_mean,'.-','LineWidth',2);
+    plot([0:num_iterations-1], Loss_4_mean,'.-','LineWidth',2);
     legend(Method_list)
     hold off
     title('Loss function')
