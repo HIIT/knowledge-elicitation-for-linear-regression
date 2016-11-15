@@ -91,6 +91,12 @@ for run = 1:num_runs
     X_all   = generate_data(num_data,num_features, normalization_method);
     Y_all   = normrnd(X_all*theta_star, model_params.Nu_y);
     [X_train, X_user, X_test, Y_train, Y_user, Y_test] = partition_data(X_all, Y_all, num_userdata, num_trainingdata);
+    %In the simulation, Generate user feedbacks beforehand so that all methods would receive the same feedback value.
+    all_feedback = zeros(num_features,1);
+    for feature_index = 1:size(X_train,1)
+        new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
+        all_feedback(feature_index) = new_fb_value;
+    end
     %% main algorithms (ED, AL, and GT)
     for method_num = 1:num_methods
         method_name = Method_list(method_num);
@@ -109,8 +115,8 @@ for run = 1:num_runs
             if find(strcmp('Ground truth - all feedback', method_name))
                 %calculate the posterior based on all feedbacks
                 for feature_index = 1:size(X_train,1)
-                    new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
-                    Feedback = [Feedback; new_fb_value , feature_index];
+                    %new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
+                    Feedback = [Feedback; all_feedback(feature_index) , feature_index];
                 end
                  posterior = calculate_posterior(X_train, Y_train, Feedback, ...
                     model_params, MODE, sparse_params, sparse_options);                                            
@@ -157,8 +163,8 @@ for run = 1:num_runs
                 end
                 decisions(method_num, it, run) = feature_index;
                 %simulate user feedback
-                new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
-                Feedback = [Feedback; new_fb_value , feature_index];
+                %new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, model_params);
+                Feedback = [Feedback; all_feedback(feature_index) , feature_index];
             end
             %% If AL: add a new data point based on AL decision policy 
             if find(strcmp(Method_list_AL, method_name))               
