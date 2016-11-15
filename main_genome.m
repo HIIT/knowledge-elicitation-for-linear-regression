@@ -49,14 +49,18 @@ Feedback = [];            %only used in experimental design methdos
 Y_hat_norm = zeros(num_drugs, num_data); %predicted values in normalized space
 Y_hat_all  = zeros(num_drugs, num_data); %predicted values in original space 
 Y_all_norm = zeros(num_drugs, num_data); %response values in normalized space
+Y_naive    = zeros(num_drugs, num_data); %prediction based on naive method
+Y_naive_norm    = zeros(num_drugs, num_data); %prediction based on naive method
 Loss_1 = zeros(num_drugs, num_data); %MSE
 Loss_2 = zeros(num_drugs, num_data); %LPP
 Loss_3 = zeros(num_drugs, num_data); %LPP train
 Loss_4 = zeros(num_drugs, num_data); %MSE train
+Loss_naive = zeros(num_drugs, num_data); %MSE of baseline
 Loss_1_norm = zeros(num_drugs, num_data); %MSE in normalized space
 Loss_2_norm = zeros(num_drugs, num_data); %LPP in normalized space
 Loss_3_norm = zeros(num_drugs, num_data); %LPP train in normalized space
 Loss_4_norm = zeros(num_drugs, num_data); %MSE train in normalized space
+Loss_naive_norm = zeros(num_drugs, num_data); %MSE of baseline
 decisions = zeros(num_drugs, num_data); 
 tic
 
@@ -73,6 +77,9 @@ for drug = 1: num_drugs
         Y_train = Y_all(~test_index,drug);
         X_test = X_all(test_index,:)';
         Y_test = Y_all(test_index,drug);
+        
+        Y_naive(drug, test_ind) = mean(Y_train);
+        Loss_naive(drug, test_ind) = (mean(Y_train)-Y_test)^2;
         %% normalize the data 
         %normalise training data
         x_mean  = mean(X_train,2);
@@ -89,6 +96,10 @@ for drug = 1: num_drugs
         Y_train = (Y_train - y_mean)./y_std;    
         Y_test_normalized = (Y_test - y_mean)./y_std; 
         Y_all_norm(drug, test_ind) = Y_test_normalized;
+        
+        Y_naive_norm(drug, test_ind) = mean(Y_train);
+        Loss_naive_norm(drug, test_ind) = (mean(Y_train)-Y_test_normalized)^2;
+        
         
 %         %Find constant features. Due to some numerical issues after the normalization, we need to consider an epsilon distance
 %         non_const_features = (std(X_train')>0.00001 | std(X_train')<-0.00001);
@@ -136,7 +147,7 @@ for drug = 1: num_drugs
 end
 %% averaging and plotting
 Y_all = Y_all';
-save('results_genome', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'Loss_1_norm', 'Loss_2_norm', 'Loss_3_norm', 'Loss_4_norm',...
-    'drug_names', 'drug_indices', 'Y_hat_norm', 'Y_hat_all', 'Y_all', 'Y_all_norm', 'decisions', 'model_params', 'sparse_options','sparse_params', ...
+save('results_genome', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'Loss_1_norm', 'Loss_2_norm', 'Loss_3_norm', 'Loss_4_norm','Loss_naive', 'Loss_naive_norm',...
+    'drug_names', 'drug_indices', 'Y_hat_norm', 'Y_hat_all', 'Y_all', 'Y_all_norm', 'Y_naive', 'Y_naive_norm', 'decisions', 'model_params', 'sparse_options','sparse_params', ...
      'num_features','num_trainingdata', 'MODE')
 evaluate_results_genome

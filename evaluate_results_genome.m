@@ -9,14 +9,19 @@ load('results_genome.mat');
 figure
 imagesc(Loss_1);
 averag_mse_all = mean(mean(Loss_1))
-figure
-imagesc(Loss_4);
+% figure
+% imagesc(Loss_4);
+
+average_mse_naive = mean(mean(Loss_naive))
 
 figure
-subplot(2,1,1) 
+subplot(3,1,1) 
 boxplot(Y_all',drug_names);
 ylabel('Drug responses')
-subplot(2,1,2) 
+subplot(3,1,2) 
+boxplot(Y_hat_all',drug_names);
+ylabel('Drug predictions')
+subplot(3,1,3) 
 boxplot(Loss_1',drug_names);
 ylabel('LOO MSE')
 
@@ -27,18 +32,31 @@ diag(RHO_P)
 [RHO_D,PVAL_D] = corr(Y_all',Y_hat_all','Type','Spearman');
 disp('drug-wise correlation')
 diag(RHO_D)
+
+[RHO_P,PVAL_P] = corr(Y_all,Y_naive,'Type','Spearman');
+disp('patient-wise correlation NAIVE')
+diag(RHO_P)
+[RHO_D,PVAL_D] = corr(Y_all',Y_naive','Type','Spearman');
+disp('drug-wise correlation NAIVE')
+diag(RHO_D)
 %% for the normalized space
 figure
 imagesc(Loss_1_norm);
 averag_mse_all_norm = mean(mean(Loss_1_norm))
-figure
-imagesc(Loss_4_norm);
+% figure
+% imagesc(Loss_4_norm);
+
+average_mse_naive_norm = mean(mean(Loss_naive_norm))
+
 
 figure
-subplot(2,1,1) 
+subplot(3,1,1) 
 boxplot(Y_all_norm',drug_names);
 ylabel('Drug responses (normalized space)')
-subplot(2,1,2) 
+subplot(3,1,2) 
+boxplot(Y_hat_norm',drug_names);
+ylabel('Drug predictions (normalized space)')
+subplot(3,1,3)
 boxplot(Loss_1_norm',drug_names);
 ylabel('LOO MSE (normalized space)')
 
@@ -50,6 +68,12 @@ diag(RHO_P)
 disp('drug-wise correlation')
 diag(RHO_D)
 
+[RHO_P,PVAL_P] = corr(Y_all_norm,Y_naive_norm,'Type','Spearman');
+disp('patient-wise correlation NAIVE')
+diag(RHO_P)
+[RHO_D,PVAL_D] = corr(Y_all_norm',Y_naive_norm','Type','Spearman');
+disp('drug-wise correlation NAIVE')
+diag(RHO_D)
 
 % close all
 % clear all
