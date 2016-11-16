@@ -35,6 +35,7 @@ METHODS_ED = {
      'False',  'Max(90% UCB,90% LCB)'; 
      'True',  'Uniformly random';
      'True', 'random on the relevelant features';
+     'False',  'Max posterior inclusion probability';
      'False', 'max variance';
      'False', 'Bayes experiment design';
      'False',  'Expected information gain';
