@@ -10,7 +10,7 @@ main:
 main_all: 
     the number of training data or dimensions can be arrays, e.g, 2:10:300.
 main_real_data.m:
-    This script is useful for real data. Your data should contain a matrix of X with size (n*p) and a matrix of Y with size (n*1). In the code there is an example of using the method for Amazon and Yelp dataset. 
+    This script is useful for real data. Your data should contain a matrix of X with size (n by p) and a matrix of Y with size (n by 1). In the code there is an example of using the method for Amazon and Yelp dataset. 
     
 Depending on the MODE parameter, the type of model and feedback changes:
            MODE = 
