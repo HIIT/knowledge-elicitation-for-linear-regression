@@ -64,10 +64,10 @@ Loss_1 = zeros(num_methods,num_drugs, num_data); %MSE
 Loss_2 = zeros(num_methods,num_drugs, num_data); %LPP
 Loss_3 = zeros(num_methods,num_drugs, num_data); %LPP train
 Loss_4 = zeros(num_methods,num_drugs, num_data); %MSE train
-Loss_1_norm = zeros(num_drugs, num_data); %MSE in normalized space
-Loss_2_norm = zeros(num_drugs, num_data); %LPP in normalized space
-Loss_3_norm = zeros(num_drugs, num_data); %LPP train in normalized space
-Loss_4_norm = zeros(num_drugs, num_data); %MSE train in normalized space
+Loss_1_norm = zeros(num_methods,num_drugs, num_data); %MSE in normalized space
+Loss_2_norm = zeros(num_methods,num_drugs, num_data); %LPP in normalized space
+Loss_3_norm = zeros(num_methods,num_drugs, num_data); %LPP train in normalized space
+Loss_4_norm = zeros(num_methods,num_drugs, num_data); %MSE train in normalized space
 tic
 
 sparse_params_array = [];
@@ -181,7 +181,7 @@ for drug = 1: num_drugs
 end
 %% averaging and plotting
 Y_all = Y_all';
-save('results_genome', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'Loss_1_norm', 'Loss_2_norm', 'Loss_3_norm', 'Loss_4_norm',...
+save('results_genome', 'Loss_1', 'Loss_2', 'Loss_3', 'Loss_4', 'Loss_1_norm', 'Loss_2_norm', 'Loss_3_norm', 'Loss_4_norm','Method_list',...
     'selected_drug_names', 'selected_drug_indices', 'Y_hat_norm', 'Y_hat_all', 'Y_all', 'Y_all_norm', 'model_params', 'sparse_options','sparse_params', ...
      'num_features','num_trainingdata', 'MODE')
 evaluate_results_genome
