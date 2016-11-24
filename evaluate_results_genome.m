@@ -22,7 +22,23 @@ MSE_norm = array2table(mse_average_norm','VariableNames',method_names,'RowNames'
 %     boxplot(loss_1',method_names);  
 % end
 
+%% perform paired test: Does extra feed help (compared to no feedback)?
+MSE_SS_no_FB = reshape(Loss_1(2,:,:), [num_drugs,num_data,]);
+MSE_SS_FB_C  = reshape(Loss_1(3,:,:), [num_drugs,num_data,]);
+MSE_SS_FB_M  = reshape(Loss_1(4,:,:), [num_drugs,num_data,]);
 
+[h_c,p_c,ci_c,stats_c] = ttest(MSE_SS_no_FB',MSE_SS_FB_C');
+[h_m,p_m,ci_m,stats_m] = ttest(MSE_SS_no_FB',MSE_SS_FB_M');
+
+MSE_SS_no_FB_norm = reshape(Loss_1_norm(2,:,:), [num_drugs,num_data,]);
+MSE_SS_FB_C_norm  = reshape(Loss_1_norm(3,:,:), [num_drugs,num_data,]);
+MSE_SS_FB_M_norm  = reshape(Loss_1_norm(4,:,:), [num_drugs,num_data,]);
+
+[h_c_n,p_c_n,ci_c_n,stats_c_n] = ttest(MSE_SS_no_FB_norm',MSE_SS_FB_C_norm');
+[h_m_n,p_m_n,ci_m_n,stats_m_n] = ttest(MSE_SS_no_FB_norm',MSE_SS_FB_M_norm');
+
+
+%%
 % % % %% for the original space
 % % % figure
 % % % imagesc(Loss_1);
