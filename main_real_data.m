@@ -4,25 +4,16 @@ RNG_SEED = rng;
 
 %% Load the proper dataset
 %The following line loads X_all, Y_all, and keywords (name of features)
-% load('DATA_amazon\amazon_data');
-load('DATA_yelp\yelp_academic_data_clean_from2006_100app');
+load('DATA_amazon\amazon_data');
+% load('DATA_yelp\yelp_academic_data_clean_from2006_100app');
 %The following line loads sparse parameters learned by CV and also theta_star 
 % and P_gamma leaned by using all the data (ground truth).
-% load('DATA_amazon\cv_results');
-load('DATA_yelp\cv_results');
+load('DATA_amazon\cv_results');
+% load('DATA_yelp\cv_results');
 
-%% Let the algortihm learns the parameters 
-%(comment the following lines if you want to use the CV results)
-sparse_params.sigma2_prior = true;
-sparse_params.sigma2_a  = 1;
-sparse_params.sigma2_b  = 1;
-sparse_params.rho_prior = false;
-% sparse_params.rho_a = 1;
-% sparse_params.rho_b = 1;
 %% Parameters and data setup
 MODE = 2; 
 % MODE specifies the  type of feedback and the model that we are using
-%           0: Feedback on weight values. Model: Gaussian prior 
 %           1: Feedback on weight values. Model: spike and slab prior
 %           2: Feedback on relevance of features. Model: spike and slab prior
 
@@ -40,41 +31,42 @@ z_star_gt(P_gamma<=1-decision_threshold) = 0; %non-relevant features
 z_star_gt(P_gamma<decision_threshold & P_gamma>1-decision_threshold) = -1; %"don't know" features 
 
 %simulation parameters
-num_iterations   = 200; %total number of user feedback
+num_iterations   = 200 + 1; %total number of user feedback
 num_runs         = 50;   %total number of runs (necessary for averaging results)
 
-%things that have not been used (since we do not simulate the data)
-normalization_method  = -1; % (NOT USED HERE)
-
-%model parameters based on CV results
-model_params   = struct('Nu_y',sqrt(sparse_params.sigma2), 'Nu_theta', sqrt(sparse_params.tau2), ...
-    'Nu_user', 0.1, 'P_user', decision_threshold, 'P_zero', sparse_params.rho, 'simulated_data', 0);
+%model parameters
 sparse_options = struct('damp',0.8, 'damp_decay',0.95, 'robust_updates',2, 'verbosity',0, ...
     'max_iter',1000, 'threshold',1e-5, 'min_site_prec',1e-6);
-% sparse_params  = struct('sigma2',1, 'tau2', 0.1^2 ,'p_u', model_params.P_user,'rho', 0.3 );
-sparse_params.p_u = model_params.P_user;
-sparse_params.eta2 = model_params.Nu_user^2;   % (NOT USED IN MODE=2)   
+sparse_params  = struct('sigma2',1, 'tau2', 0.1^2 ,'p_u', decision_threshold,'rho', 0.3 ); 
+sparse_params.p_u = decision_threshold;
+sparse_params.simulated_data = 0;
+sparse_params.eta2 = 0.1^2;   % (NOT USED IN MODE=2)   
+%% Let the algortihm learns the parameters 
+%(comment the following lines if you want to use the CV results)
+sparse_params.sigma2_prior = true;
+sparse_params.sigma2_a  = 1;
+sparse_params.sigma2_b  = 1;
+sparse_params.rho_prior = false;
+% sparse_params.rho_a = 1;
+% sparse_params.rho_b = 1;
 %% METHOD LIST
 % Set the desirable methods to 'True' and others to 'False'. only the 'True' methods will be considered in the simulation
-METHODS_ED = {
-     'False',  'Max(90% UCB,90% LCB)'; 
-     'True',  'Uniformly random';
-     'True', 'random on the relevelant features';
+METHODS_ED = {     
+     'True',  'Random';
+     'True',  'First relevant features, then non-relevant';
+     'False',  'Max posterior inclusion probability';
      'False', 'max variance';
-     'False', 'Bayes experiment design';
-     'False',  'Expected information gain';
-     'False', 'Bayes experiment design (tr.ref)';
-     'False',  'Expected information gain (post_pred)';
-     'False',  'Expected information gain (post_pred), non-sequential';
-     'True',  'Expected information gain (post_pred), fast approx'; %Only available for MODE = 2?
-     'True',  'Expected information gain (post_pred), fast approx, non-sequential' %Only available for MODE = 2?
+     'False',  'Expected information gain, full EP approx';
+     'False',  'Expected information gain, full EP approx, non-sequential';
+     'True',  'Expected information gain, fast approx'; %fast approx methdos are available for MODE = 2 only
+     'False',  'Expected information gain, fast approx, non-sequential' %fast approx methdos are available for MODE = 2 only
      };
 METHODS_AL = {
      'True',  'AL:Uniformly random';
      'True',  'AL: Expected information gain'
      }; 
- METHODS_GT = {
-     'True',  'Ground truth - all data';
+METHODS_GT = {
+     'False',  'Ground truth - all data';
      'True',  'Ground truth - all feedback'
      }; 
 Method_list_ED = [];
@@ -98,9 +90,8 @@ end
 Method_list = [Method_list_GT, Method_list_ED, Method_list_AL];
 num_methods = size(Method_list,2); %number of decision making methods that we want to consider
 %% Main algorithm
-Loss_1 = zeros(num_methods, num_iterations, num_runs);
-Loss_2 = zeros(num_methods, num_iterations, num_runs);
-Loss_3 = zeros(num_methods, num_iterations, num_runs);
+Loss_1 = zeros(num_methods, num_iterations, num_runs); % MSE on test
+Loss_2 = zeros(num_methods, num_iterations, num_runs); % MSE on train
 decisions = zeros(num_methods, num_iterations, num_runs); 
 tic
 for run = 1:num_runs
@@ -130,12 +121,12 @@ for run = 1:num_runs
     %% learn user feedback and model by using "user" data 
     %train with the user data to learn the parameters (calculate posterior without feedback)
     sparse_options.si = [];
-    posterior = calculate_posterior(X_user, Y_user, [], model_params, 2, sparse_params, sparse_options);
+    posterior = calculate_posterior(X_user, Y_user, [],  2, sparse_params, sparse_options);
     theta_star_user = posterior.mean;
     z_star_user = zeros(num_features,1);
-    z_star_user(posterior.p>=model_params.P_user) = 1;  %relevant features
-    z_star_user(posterior.p<=1-model_params.P_user) = 0; %non-relevant features 
-    z_star_user(posterior.p<model_params.P_user & posterior.p>1-model_params.P_user) = -1; %"don't know" features 
+    z_star_user(posterior.p>=sparse_params.p_u) = 1;  %relevant features
+    z_star_user(posterior.p<=1-sparse_params.p_u) = 0; %non-relevant features 
+    z_star_user(posterior.p<sparse_params.p_u & posterior.p>1-sparse_params.p_u) = -1; %"don't know" features 
     
     %% main algorithms (ED, AL, and GT)
     for method_num = 1:num_methods
@@ -170,47 +161,43 @@ for run = 1:num_runs
             if find(strcmp('Ground truth - all data', method_name))
                 %calculate the posterior based on all train+user data 
                 posterior = calculate_posterior([X_train, X_user], [Y_train; Y_user], Feedback, ...
-                    model_params, MODE, sparse_params, sparse_options);
+                    MODE, sparse_params, sparse_options);
             end
             if find(strcmp('Ground truth - all feedback', method_name))
                 %calculate the posterior based on all feedbacks
                 for feature_index = 1:size(X_train,1)
-                    new_fb_value = user_feedback(feature_index, theta_star_user, z_star_user, MODE, model_params);
+                    new_fb_value = user_feedback(feature_index, theta_star_user, z_star_user, MODE, sparse_params);
                     Feedback = [Feedback; new_fb_value , feature_index];
                 end
                  posterior = calculate_posterior(X_train, Y_train, Feedback, ...
-                    model_params, MODE, sparse_params, sparse_options);                                            
+                    MODE, sparse_params, sparse_options);                                            
             end
             Y_hat = X_test'*posterior.mean;
             Y_hat = Y_hat .* y_std + y_mean;
-            [mse,log_pp_test,log_pp_train] = calculate_loss(X_train,Y_train, posterior, ...
-                X_test, Y_hat, Y_test, model_params);
-            Loss_1(method_num, :, run) = mse;
-            Loss_2(method_num, :, run) = log_pp_test;
-            Loss_3(method_num, :, run) = log_pp_train;
+            Y_hat_train = X_train'*posterior.mean;
+            Loss_1(method_num, :, run) = mean((Y_hat- Y_test).^2); %MSE
+            Loss_2(method_num, :, run) = mean((Y_hat_train- Y_train).^2); %MSE on training 
             continue
         end
         %% for non-sequential ED methods find the suggested queries before user interaction
         if strfind(char(method_name),'non-sequential')
-            posterior = calculate_posterior(x_train, y_train, [], model_params, MODE, sparse_params, sparse_options);
+            posterior = calculate_posterior(x_train, y_train, [], MODE, sparse_params, sparse_options);
             %find non-sequential order of features to be queried from the user
             non_seq_feature_indices = decision_policy(posterior, method_name, z_star_gt_temp, x_train, y_train, ...
-                [], model_params, MODE, sparse_params, sparse_options);
+                [], MODE, sparse_params, sparse_options);
         end
         %% User interaction
         for it = 1:num_iterations %number of user feedback
             %calculate the posterior based on training + feedback until now
-            posterior = calculate_posterior(x_train, y_train, Feedback, model_params, MODE, sparse_params, sparse_options);
+            posterior = calculate_posterior(x_train, y_train, Feedback, MODE, sparse_params, sparse_options);
             sparse_options.si = posterior.si;
             %% calculate different loss functions
             % transform predictions back to the original scale
             Y_hat = x_test'*posterior.mean;
-            Y_hat = Y_hat .* y_std + y_mean;             
-            [mse,log_pp_test,log_pp_train] = calculate_loss(x_train, y_train, posterior, ...
-                x_test, Y_hat, Y_test, model_params);
-            Loss_1(method_num, it, run) = mse;
-            Loss_2(method_num, it, run) = log_pp_test;
-            Loss_3(method_num, it, run) = log_pp_train;
+            Y_hat = Y_hat .* y_std + y_mean;                    
+            Y_hat_train = x_train'*posterior.mean;
+            Loss_1(method_num, it, run) = mean((Y_hat- Y_test).^2); %MSE
+            Loss_2(method_num, it, run) = mean((Y_hat_train- y_train).^2); %MSE on training            
             %% If ED: make a decision based on ED decision policy
             if find(strcmp(Method_list_ED, method_name))
                 %for non-sequential methods, use the saved order
@@ -219,7 +206,7 @@ for run = 1:num_runs
                 else
                     %for sequential methods find the next decision based on feedback until now
                     feature_index = decision_policy(posterior, method_name, z_star_gt_temp, x_train, y_train,...
-                        Feedback, model_params, MODE, sparse_params, sparse_options);
+                        Feedback, MODE, sparse_params, sparse_options);
                 end             
                 if MODE == 2
                     %save the true feature index (consider the removed features too)
@@ -228,13 +215,13 @@ for run = 1:num_runs
                     decisions(method_num, it, run) = feature_index;
                 end
                 %simulate user feedback
-                new_fb_value = user_feedback(feature_index, theta_star_user_temp, z_star_user_temp, MODE, model_params);
+                new_fb_value = user_feedback(feature_index, theta_star_user_temp, z_star_user_temp, MODE, sparse_params);
                 Feedback = [Feedback; new_fb_value , feature_index];
             end
             %% If AL: add a new data point based on AL decision policy 
             if find(strcmp(Method_list_AL, method_name))               
                 [new_selected_data] = decision_policy_AL(posterior, method_name, x_train, y_train, ...
-                    x_user, selected_data, model_params, sparse_params, sparse_options);                
+                    x_user, selected_data, sparse_params, sparse_options);                
                 selected_data = [selected_data;new_selected_data]; 
                 %add active learning selected data to training data
                 x_train = [X_train, X_user(:,selected_data)];
@@ -254,6 +241,6 @@ for run = 1:num_runs
 end
 %% averaging and plotting
 z_star = z_star_gt;
-save('results', 'Loss_1', 'Loss_2', 'Loss_3', 'decisions', 'model_params', 'sparse_options','sparse_params', ...
-    'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
+save('results', 'Loss_1', 'Loss_2', 'decisions', 'sparse_options','sparse_params', ...
+    'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'RNG_SEED')
 evaluate_results

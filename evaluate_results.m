@@ -9,8 +9,7 @@ num_iterations = size(decisions,2);
 num_runs = size(decisions,3);
 
 %display useful information about the simulation
-disp(struct2table(model_params));
-% disp(struct2table(sparse_params));
+disp(struct2table(sparse_params));
 if MODE == 1
     disp('Feedback is on the weight value of features');
 end
@@ -21,7 +20,9 @@ disp(['Number of features: ', num2str(num_features),'.']);
 disp(['Number of "relevant" features: ', num2str(sum(z_star==1)),'.']);
 disp(['Number of "do not know" features: ', num2str(sum(z_star==-1)),'.']);
 disp(['Number of training data: ', num2str(num_trainingdata),'.']);
-disp(['Data normalization method: ', num2str(normalization_method),'.']);
+if exist('normalization_method')
+    disp(['Data normalization method: ', num2str(normalization_method),'.']);
+end
 disp(['Averaged over ', num2str(num_runs), ' runs.']);
 
 
@@ -46,40 +47,40 @@ ylabel('Mean Squared Error','FontSize',16)
 % legend({'GT','Random', 'Random on the relevant features', ...
 %     'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
 
-figure
-plot([0:num_iterations-1],mean(Loss_2,3)','.-','LineWidth',2);
-legend(Method_list)
-title('Utility function')
-xlabel('Number of Expert Feedbacks','FontSize',16)
-ylabel('Utility value (log(posterior predictive))','FontSize',16)
+% figure
+% plot([0:num_iterations-1],mean(Loss_3,3)','.-','LineWidth',2);
+% legend(Method_list)
+% title('Utility function')
+% xlabel('Number of Expert Feedbacks','FontSize',16)
+% ylabel('Utility value (log(posterior predictive))','FontSize',16)
+% 
+% figure
+% plot([0:num_iterations-1],mean(Loss_4,3)','.-','LineWidth',2);
+% legend(Method_list)
+% title('Utility function')
+% xlabel('Number of Expert Feedbacks','FontSize',16)
+% ylabel('Utility value (log(posterior predictive)) on tr.data','FontSize',16)
+
+
 
 figure
-plot([0:num_iterations-1],mean(Loss_3,3)','.-','LineWidth',2);
-legend(Method_list)
-title('Utility function')
-xlabel('Number of Expert Feedbacks','FontSize',16)
-ylabel('Utility value (log(posterior predictive)) on tr.data','FontSize',16)
-
-
-if exist('Loss_4')
-    figure
-    Loss_4_mean = mean(Loss_4,3)';
-    hold on
+Loss_2_mean = mean(Loss_2,3)';
+hold on
 %     %This one is for the legend, it should be removed after fixing the legends
 %     plot(0:ticks:num_iterations-1,Loss_4_mean(1:ticks:end,:),'-s','LineWidth',2);
 %     % legend boxoff
 %     %This one is for the markers
 %     plot(0:ticks:num_iterations-1,Loss_4_mean(1:ticks:end,:),'s','LineWidth',2);
-    %This one is the data
-    plot([0:num_iterations-1], Loss_4_mean,'.-','LineWidth',2);
-    legend(Method_list)
-    hold off
-    title('Loss function')
-    xlabel('Number of Expert Feedbacks','FontSize',16)
-    ylabel('Mean Squared Error on Training','FontSize',16)
+%This one is the data
+plot([0:num_iterations-1], Loss_2_mean,'.-','LineWidth',2);
+legend(Method_list)
+hold off
+title('Loss function')
+xlabel('Number of Expert Feedbacks','FontSize',16)
+ylabel('Mean Squared Error on Training','FontSize',16)
 %     legend({'GT','Random', 'Random on the relevant features', ...
 %         'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
-end
+
 
 %divide the decisions in two groups:  0. non-relevant features 1. relevant features
 relevants_features = find(z_star == 1);
