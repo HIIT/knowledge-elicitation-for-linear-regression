@@ -8,7 +8,7 @@ This repository contains code for expert knowledge elicitation in sparse linear 
 
 ## Basic Usage
 
-The script [linreg_sns_ep.m](linreg_sns_ep.m) contains the posterior inference and the function [decision_policy.m](decision_policy.m) has implementation of different query method [1]. 
+The script [linreg_sns_ep.m](linreg_sns_ep.m) contains the posterior inference and the function [decision_policy.m](decision_policy.m) has implementation of different query methods [1]. 
 
 ```matlab
 %Inputs: 
