@@ -3,7 +3,6 @@ close all
 
 load('results')
 
-
 num_methods = size(Method_list,2);
 num_iterations = size(decisions,2);
 num_runs = size(decisions,3);
@@ -25,62 +24,24 @@ if exist('normalization_method')
 end
 disp(['Averaged over ', num2str(num_runs), ' runs.']);
 
-
-
 figure
 Loss_1_mean = mean(Loss_1,3)';
-hold on
-% %This one is for the legend, it should be removed after fixing the legends
-% ticks = 20;
-% plot(0:ticks:num_iterations-1,Loss_1_mean(1:ticks:end,:),'-s','LineWidth',2);
-% % legend boxoff
-% %This one is for the markers
-% plot(0:ticks:num_iterations-1,Loss_1_mean(1:ticks:end,:),'s','LineWidth',2);
 %This one is the data
 plot([0:num_iterations-1],Loss_1_mean,'.-','LineWidth',2);
 legend(Method_list)
-hold off
 title('Loss function')
-xlabel('Number of Expert Feedbacks','FontSize',16)
-ylabel('Mean Squared Error','FontSize',16)
-% ylabel('Loss value (X-test*theta - Y-test)','FontSize',16)
-% legend({'GT','Random', 'Random on the relevant features', ...
-%     'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
-
-% figure
-% plot([0:num_iterations-1],mean(Loss_3,3)','.-','LineWidth',2);
-% legend(Method_list)
-% title('Utility function')
-% xlabel('Number of Expert Feedbacks','FontSize',16)
-% ylabel('Utility value (log(posterior predictive))','FontSize',16)
-% 
-% figure
-% plot([0:num_iterations-1],mean(Loss_4,3)','.-','LineWidth',2);
-% legend(Method_list)
-% title('Utility function')
-% xlabel('Number of Expert Feedbacks','FontSize',16)
-% ylabel('Utility value (log(posterior predictive)) on tr.data','FontSize',16)
-
+xlabel('Number of Expert Feedbacks')
+ylabel('Mean Squared Error')
 
 
 figure
 Loss_2_mean = mean(Loss_2,3)';
-hold on
-%     %This one is for the legend, it should be removed after fixing the legends
-%     plot(0:ticks:num_iterations-1,Loss_4_mean(1:ticks:end,:),'-s','LineWidth',2);
-%     % legend boxoff
-%     %This one is for the markers
-%     plot(0:ticks:num_iterations-1,Loss_4_mean(1:ticks:end,:),'s','LineWidth',2);
 %This one is the data
 plot([0:num_iterations-1], Loss_2_mean,'.-','LineWidth',2);
 legend(Method_list)
-hold off
 title('Loss function')
-xlabel('Number of Expert Feedbacks','FontSize',16)
-ylabel('Mean Squared Error on Training','FontSize',16)
-%     legend({'GT','Random', 'Random on the relevant features', ...
-%         'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
-
+xlabel('Number of Expert Feedbacks')
+ylabel('Mean Squared Error on Training')
 
 %divide the decisions in two groups:  0. non-relevant features 1. relevant features
 relevants_features = find(z_star == 1);
@@ -92,35 +53,90 @@ figure
 plot(ave_binary_decisions','.-','LineWidth',2);
 legend(Method_list)
 title('Average suggestion behavior of each method')
-xlabel('Number of Expert Feedbacks','FontSize',16)
-ylabel('0 means zero or "do not know" features, 1 means relevant features','FontSize',16)
+xlabel('Number of Expert Feedbacks')
+ylabel('0 means zero or "do not know" features, 1 means relevant features')
 
 acccumulated_ave_binary_decisions = cumsum(ave_binary_decisions,2);
 acccumulated_ave_binary_decisions = [acccumulated_ave_binary_decisions ./ repmat([1:num_iterations],num_methods,1)]';
 
 figure
-hold on
-% %This one is for the legend, it should be removed after fixing the legends
-% plot(1:ticks:num_iterations,acccumulated_ave_binary_decisions(1:ticks:end,:),'-s','LineWidth',2);
-% % legend boxoff
-% %This one is for the markers
-% plot(1:ticks:num_iterations,acccumulated_ave_binary_decisions(1:ticks:end,:),'s','LineWidth',2);
 %This one is the data
 plot(acccumulated_ave_binary_decisions,'.-','LineWidth',2);
 legend(Method_list)
-% legend({'GT','Random', 'Random on the relevant features', ...
-%     'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14)
 title('Accumulated average suggestion behavior of each method')
-xlabel('Number of Expert Feedbacks','FontSize',16)
-ylabel('0 means zero or "do not know" features, 1 means relevant features','FontSize',16)
+xlabel('Number of Expert Feedbacks')
+ylabel('0 means zero or "do not know" features, 1 means relevant features')
 
-% %show the histogram of decisions
-% for method =1 : num_methods
-%     figure
-%     data = reshape(decisions(method,:,:),[num_iterations*num_runs,1]);
-%     hist(data,num_features)
-% end
-
-
+%% create tables for comparing number of samples/feedback to reach the same MSE level
+MSE_levels = max(max(Loss_1_mean)):-0.01:min(min(Loss_1_mean));
+table = zeros(size(MSE_levels,2),num_methods);
+for m=1:num_methods
+    for mse_ind = 1:size(MSE_levels,2)
+        ind = find(Loss_1_mean(:,m) < MSE_levels(mse_ind),1);
+        if isempty(ind)
+            table(mse_ind,m) = inf;
+        else
+            table(mse_ind,m) = ind;
+        end
+    end
+end
+MSE_table = array2table(table,'VariableNames',regexprep(Method_list,'[^\w'']',''),'RowNames',cellstr(num2str((MSE_levels)')));
+%% Plot the three figures in the Finalized format (paper format)
+num_ticks = 10;
+MarkerIndices = 1:floor(num_iterations/num_ticks):num_iterations;
+for fig_num=1:3
+    figure
+    hold on
+    if fig_num == 1
+        data = Loss_1_mean;
+        xlabel('Number of Expert Feedbacks','FontSize',16)
+        ylabel('Mean Squared Error','FontSize',16)
+    end
+    if fig_num == 2
+        data = Loss_2_mean;
+        xlabel('Number of Expert Feedbacks','FontSize',16)
+        ylabel('Mean Squared Error on Training','FontSize',16)        
+    end
+    if fig_num == 3
+        data = acccumulated_ave_binary_decisions;
+        title('Accumulated average suggestion behavior of each method')
+        xlabel('Number of Expert Feedbacks','FontSize',16)
+        ylabel('0: zero features, 1: non-zero features','FontSize',16)
+        %     ylabel('0 means zero or "do not know" features, 1 means relevant features','FontSize',16)
+    end
+    %Random
+    method_ind = 2;
+    plot([0],data(1,method_ind),'-^','LineWidth',2,'MarkerSize',8,'Color',[0,0.5,0]);
+    plot(MarkerIndices-1,data(MarkerIndices,method_ind),'^','LineWidth',2,'MarkerSize',8,'Color',[0,0.5,0]);
+    plot([0:num_iterations-1],data(:,method_ind),'-','LineWidth',2,'Color',[0,0.5,0]);
+    %First relevant features, then non-relevant
+    method_ind = 3;
+    plot([0],data(1,method_ind),'-rv','LineWidth',2,'MarkerSize',8);
+    plot(MarkerIndices-1,data(MarkerIndices,method_ind),'rv','LineWidth',2,'MarkerSize',8);
+    plot([0:num_iterations-1],data(:,method_ind),'-r','LineWidth',2);
+    %Sequential Experimental Design
+    method_ind = 4;
+    plot([0],data(1,method_ind),'-bs','LineWidth',2,'MarkerSize',8);
+    plot(MarkerIndices-1,data(MarkerIndices,method_ind),'bs','LineWidth',2,'MarkerSize',8);
+    plot([0:num_iterations-1],data(:,method_ind),'-b','LineWidth',2);
     
-%SAVE AS eps
+    if sparse_params.simulated_data == 1
+        %non-sequential method (if needed)
+        method_ind = 5;
+        plot([0],data(1,method_ind),'-mo','LineWidth',2,'MarkerSize',8);
+        plot(MarkerIndices-1,data(MarkerIndices,method_ind),'mo','LineWidth',2,'MarkerSize',8);
+        plot([0:num_iterations-1],data(:,method_ind),'-m','LineWidth',2);
+        legend({'Random', '','','First relevant features, then non-relevant','','', ...
+            'Sequential Experimental Design','','', 'Non-sequential Experimental Design'},'FontSize',14)
+    else
+        %we don't need to plot ground truth for simulated data 
+        %Ground truth (all feedbacks)
+        method_ind = 1;
+        plot([0:num_iterations-1],data(:,method_ind),'--k','LineWidth',2);
+        legend({'Random', '','','First relevant features, then non-relevant','','', ...
+            'Sequential Experimental Design','','', 'Ground truth (all feedbacks)'},'FontSize',14) 
+    end
+    % legend boxoff
+    hold off
+
+end

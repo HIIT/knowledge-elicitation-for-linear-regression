@@ -13,7 +13,7 @@ num_runs = size(decisions,3);
 
 
 %display useful information about the simulation
-disp(struct2table(model_params));
+disp(struct2table(sparse_params));
 if MODE == 1
     disp('Feedback is on the weight value of features');
 end
@@ -32,16 +32,13 @@ disp(['Data normalization method: ', num2str(normalization_method),'.']);
 disp(['Averaged over ', num2str(num_runs), ' runs']);
 
 
-for loss_function = 1:3     
+for loss_function = 1:2     
     if loss_function == 1
         loss = Loss_1;
     end
     if loss_function == 2
         loss = Loss_2;
     end
-    if loss_function == 3
-        loss = Loss_3;
-    end    
     
     if size(num_trainingdata,2) == 1
         %% Assume that the #training_data is fixed and iterate through #dimensions
