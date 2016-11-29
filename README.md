@@ -90,4 +90,4 @@ Mode 2 is the most realistic case and it is used for the real data (Amazon and Y
 
 ## License
 
-This project is licensed under the XXXX License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
