@@ -12,10 +12,10 @@ The script [linreg_sns_ep.m](linreg_sns_ep.m) contains the posterior inference a
 
 ```matlab
 %Inputs: 
-% x                covariates (n x m). For example:
-% y                target values (n x 1). For example: 
-% pr:              prior and other fixed model parameters (see the plate diagram). For example:
-% op:              options for the EP algorithm. For example:
+% x                covariates (n x m).
+% y                target values (n x 1). 
+% pr:              prior and other fixed model parameters (see the plate diagram).
+% op:              options for the EP algorithm.
 % w_feedbacks      values (1st column) and indices (2nd column) of feedback (n_w_feedbacks x 2)
 % gamma_feedbacks  values (1st column, 0/1) and indices (2nd column) of feedback (n_gamma_feedbacks x 2)
 % Outputs:
@@ -26,7 +26,7 @@ The script [linreg_sns_ep.m](linreg_sns_ep.m) contains the posterior inference a
 [fa, si, converged, subfunctions] = linreg_sns_ep(y, x, pr, op, w_feedbacks, gamma_feedbacks, si)
 ```
 ### Example scenario
- 100 dimensional data, only 10 first coefficients are relvant, only 10 training data is available. Feedback only on relevance of features.
+ 100 dimensional data, only 10 first coefficients are non-zero, 10 training data is available. Feedback only on relevance of features.
 
 ```matlab
 %unknown coefficinet values (only first ten are non-zero)
@@ -66,24 +66,20 @@ For more examples please check the main scripts.
 ## Simulation and real data study 
 
 The starting point of the code are one of the main scripts.
-main:
-    runs the simulation for fixed number of training data and dimensions.
-main_all: 
-    the number of training data or dimensions can be arrays, e.g, 2:10:300.
-main_real_data.m:
-    This script is useful for real data. Your data should contain a matrix of X with size (n by p) and a matrix of Y with size (n by 1). In the code there is an example of using the method for Amazon and Yelp dataset. 
+[main.m](main.m) runs the simulation for fixed number of training data and dimensions.
+In [main_all.m](main_all.m) the number of training data or dimensions can be arrays, e.g, 2:10:300.
+[main_real_data.m](main_real_data.m) is for real data. Your data should contain a matrix of X with size (n by p) and a matrix of Y with size (n by 1). In the code there is an example of using the method for Amazon and Yelp dataset. 
     
 Depending on the MODE parameter, the type of model and feedback changes:
-           MODE = 
                    
-           1: Feedback on weight values. Model: spike and slab prior         
-           2: Feedback on relevance of features. Model: spike and slab prior
+           MODE =1: Feedback on weight values. Model: spike and slab prior         
+           MODE =2: Feedback on relevance of features. Model: spike and slab prior
 
 Mode 2 is the most realistic case and it is used for the real data (Amazon and Yelp dataset).           
 
 ## Citation
 
-[1] Pedram Daee, Tomi Peltola, Marta Soare and Samuel Kaski (2016). Knowledge Elicitation via Sequential Probabilistic Inference for High-Dimensional Prediction
+[1] Pedram Daee, Tomi Peltola, Marta Soare and Samuel Kaski (2016). **Knowledge Elicitation via Sequential Probabilistic Inference for High-Dimensional Prediction**
 
 ## Team
 
