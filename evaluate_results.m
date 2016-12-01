@@ -19,9 +19,6 @@ disp(['Number of features: ', num2str(num_features),'.']);
 disp(['Number of "relevant" features: ', num2str(sum(z_star==1)),'.']);
 disp(['Number of "do not know" features: ', num2str(sum(z_star==-1)),'.']);
 disp(['Number of training data: ', num2str(num_trainingdata),'.']);
-if exist('normalization_method')
-    disp(['Data normalization method: ', num2str(normalization_method),'.']);
-end
 disp(['Averaged over ', num2str(num_runs), ' runs.']);
 
 figure
@@ -35,6 +32,7 @@ ylabel('Mean Squared Error')
 
 
 figure
+%for real data case Loss_2 is MSE on training in the normalized space
 Loss_2_mean = mean(Loss_2,3)';
 %This one is the data
 plot([0:num_iterations-1], Loss_2_mean,'.-','LineWidth',2);
@@ -105,24 +103,26 @@ for fig_num=1:3
         %     ylabel('0 means zero or "do not know" features, 1 means relevant features','FontSize',16)
     end
     %Random
-    method_ind = 2;
+    method_ind = find(strcmp('Random', Method_list));
     plot([0],data(1,method_ind),'-^','LineWidth',2,'MarkerSize',8,'Color',[0,0.5,0]);
     plot(MarkerIndices-1,data(MarkerIndices,method_ind),'^','LineWidth',2,'MarkerSize',8,'Color',[0,0.5,0]);
     plot([0:num_iterations-1],data(:,method_ind),'-','LineWidth',2,'Color',[0,0.5,0]);
     %First relevant features, then non-relevant
-    method_ind = 3;
+    method_ind = find(strcmp('First relevant features, then non-relevant', Method_list));
     plot([0],data(1,method_ind),'-rv','LineWidth',2,'MarkerSize',8);
     plot(MarkerIndices-1,data(MarkerIndices,method_ind),'rv','LineWidth',2,'MarkerSize',8);
     plot([0:num_iterations-1],data(:,method_ind),'-r','LineWidth',2);
     %Sequential Experimental Design
-    method_ind = 4;
+    method_ind = max([find(strcmp('Expected information gain, full EP approx', Method_list)), ...
+        find(strcmp('Expected information gain, fast approx', Method_list))]);
     plot([0],data(1,method_ind),'-bs','LineWidth',2,'MarkerSize',8);
     plot(MarkerIndices-1,data(MarkerIndices,method_ind),'bs','LineWidth',2,'MarkerSize',8);
     plot([0:num_iterations-1],data(:,method_ind),'-b','LineWidth',2);
     
     if sparse_params.simulated_data == 1
         %non-sequential method (if needed)
-        method_ind = 5;
+        method_ind = max([find(strcmp('Expected information gain, full EP approx, non-sequential', Method_list)), ...
+            find(strcmp('Expected information gain, fast approx, non-sequential', Method_list))]);
         plot([0],data(1,method_ind),'-mo','LineWidth',2,'MarkerSize',8);
         plot(MarkerIndices-1,data(MarkerIndices,method_ind),'mo','LineWidth',2,'MarkerSize',8);
         plot([0:num_iterations-1],data(:,method_ind),'-m','LineWidth',2);
@@ -131,7 +131,7 @@ for fig_num=1:3
     else
         %we don't need to plot ground truth for simulated data 
         %Ground truth (all feedbacks)
-        method_ind = 1;
+        method_ind = find(strcmp('Ground truth - all feedback', Method_list));
         plot([0:num_iterations-1],data(:,method_ind),'--k','LineWidth',2);
         legend({'Random', '','','First relevant features, then non-relevant','','', ...
             'Sequential Experimental Design','','', 'Ground truth (all feedbacks)'},'FontSize',14) 

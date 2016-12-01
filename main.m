@@ -20,7 +20,6 @@ num_iterations = 100 + 1;  %total number of user feedback
 num_runs       = 500;  %total number of runs (necessary for averaging results)
 
 %model parameters
-normalization_method = 3; %normalization method for generating the data (Xs)
 sparse_params  = struct('sigma2',1^2, 'tau2', 1^2 , 'eta2',0.1^2,'p_u', 0.95, ...
     'rho', num_nonzero_features/num_features , 'simulated_data', 1);
 sparse_options = struct('damp',0.8, 'damp_decay',0.95, 'robust_updates',2, 'verbosity',0, ...
@@ -79,7 +78,7 @@ for run = 1:num_runs
     theta_star = [theta_star; zeros(num_features-num_nonzero_features,1)]; % make it sparse
     z_star = theta_star ~= 0; % the true value for the latent variable Z in spike and slab model
     %generate new data for each run (because the results is sensitive to the covariate values)
-    X_all   = generate_data(num_data,num_features, normalization_method);
+    X_all   = mvnrnd(zeros(num_features,1), 1.0*eye(num_features,num_features),num_data);
     Y_all   = normrnd(X_all*theta_star, sqrt(sparse_params.sigma2));
     [X_train, X_user, X_test, Y_train, Y_user, Y_test] = partition_data(X_all, Y_all, num_userdata, num_trainingdata);
     %In the simulation, Generate user feedbacks beforehand so that all methods would receive the same feedback value.
@@ -168,5 +167,5 @@ for run = 1:num_runs
 end
 %% averaging and plotting
 save('results', 'Loss_1', 'Loss_2', 'decisions', 'sparse_options', 'sparse_params', ...
-    'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
+    'z_star', 'Method_list',  'num_features','num_trainingdata', 'MODE', 'RNG_SEED')
 evaluate_results

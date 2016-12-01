@@ -176,7 +176,7 @@ for run = 1:num_runs
             Y_hat = Y_hat .* y_std + y_mean;
             Y_hat_train = X_train'*posterior.mean;
             Loss_1(method_num, :, run) = mean((Y_hat- Y_test).^2); %MSE
-            Loss_2(method_num, :, run) = mean((Y_hat_train- Y_train).^2); %MSE on training 
+            Loss_2(method_num, :, run) = mean((Y_hat_train- Y_train).^2); %MSE on training in the normalized space
             continue
         end
         %% for non-sequential ED methods find the suggested queries before user interaction

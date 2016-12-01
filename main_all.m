@@ -19,7 +19,6 @@ num_iterations = 50; %total number of user feedback
 num_runs       = 100; %total number of runs (necessary for averaging results) 
 
 %model parameters
-normalization_method = 3; %normalization method for generating the data (Xs)
 sparse_options = struct('damp',0.8, 'damp_decay',0.95, 'robust_updates',2, 'verbosity',0, 'max_iter',1000, 'threshold',1e-5, 'min_site_prec',1e-6);
 sparse_params  = struct('sigma2',1^2, 'tau2', 1^2 ,'eta2',0.1^2,'p_u', 0.95, 'simulated_data', 1);
 %% METHOD LIST
@@ -66,14 +65,13 @@ num_methods = size(Method_list,2); %number of decision making methods that we wa
 Loss_1 = zeros(num_methods, num_iterations, num_runs, size(num_features,2),size(num_trainingdata,2));
 Loss_2 = zeros(num_methods, num_iterations, num_runs, size(num_features,2),size(num_trainingdata,2));
 decisions = zeros(num_methods, num_iterations, num_runs, size(num_features,2),size(num_trainingdata,2));
-
+tic
 for n_f = 1:size(num_features,2); 
-    n_f
+    disp(['For feature index ', num2str(n_f), ' out of ', num2str(size(num_features,2)), '. acc time = ', num2str(toc) ]); 
     sparse_params.rho = max_num_nonzero_features/num_features(n_f);
     for n_t = 1:size(num_trainingdata,2);
-        n_t
-        num_data = 500 + num_trainingdata(n_t) + num_userdata; % total number of data (training and test)
-        tic
+        disp(['For  training index ', num2str(n_t), 'out of ', num2str(size(num_trainingdata,2)), '. acc time = ', num2str(toc) ]);
+        num_data = 500 + num_trainingdata(n_t) + num_userdata; % total number of data (training and test)        
         for run = 1:num_runs
             disp(['run number ', num2str(run), ' from ', num2str(num_runs), '. acc time = ', num2str(toc) ]);
             num_nonzero_features = min( num_features(n_f), max_num_nonzero_features);
@@ -83,7 +81,7 @@ for n_f = 1:size(num_features,2);
             theta_star = [theta_star; zeros(num_features(n_f)-num_nonzero_features,1)]; % make it sparse
             z_star = theta_star ~= 0; % the true value for the latent variable Z in spike and slab model
             %generate new data for each run (because the results is sensitive to the covariate values)
-            X_all   = generate_data(num_data,num_features(n_f), normalization_method);
+            X_all   = mvnrnd(zeros(num_features(n_f),1), 1.0*eye(num_features(n_f),num_features(n_f)),num_data); 
             Y_all   = normrnd(X_all*theta_star, sqrt(sparse_params.sigma2));
             [X_train, X_user, X_test, Y_train, Y_user, Y_test] = partition_data(X_all, Y_all, num_userdata, num_trainingdata(n_t));
             %% main algorithms (ED, AL, and GT)
@@ -164,5 +162,5 @@ end
 
 %% averaging and plotting
 save('results_all', 'Loss_1', 'Loss_2', 'decisions', 'sparse_options', 'sparse_params', ...
-    'z_star', 'Method_list', 'num_features','num_trainingdata', 'MODE', 'normalization_method', 'RNG_SEED')
+    'z_star', 'Method_list', 'num_features','num_trainingdata', 'MODE', 'RNG_SEED')
 evaluate_results_all
