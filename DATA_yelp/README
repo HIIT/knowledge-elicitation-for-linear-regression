@@ -1,0 +1,17 @@
+This folder creates the data necessary for simulation using the Yelp 
+(source: https://www.yelp.com/dataset_challenge).
+
+There are three scripts:
+  extract_yelp_academic_reviews: reads the review file, prepares the bag of words of the
+  full data, and extracts the response values.
+  
+  prepare_yelp_academic_data.m: This script removes keywords with less than certain number of
+  occurrences in the reviews.
+  
+  learn_z_star.m: this script first performs cross validation on the data to learn good
+  parameters for Spike-and-Slab linear regression. After that, it uses the best parameters
+  to fit a model to the data. The output can be used as some kind of a ground truth of
+  data. 
+
+
+

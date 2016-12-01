@@ -1,19 +1,23 @@
-This folder creates the data necessary for simulation using the Amazon data used in:
+This folder creates the data necessary for simulation and user study using the Amazon 
+kitchen review data (data source: https://www.cs.jhu.edu/~mdredze/datasets/sentiment/). 
+This data has also been used in:
 "Hernández-Lobato, et.al. (2015). Expectation propagation in linear regression models
 with spike-and-slab priors. Machine Learning, 99(3), 437-487."
+
 
 There are three scripts:
   extract_amazon_data.m: reads the review file, prepares the bag of words of the
   full data, and extracts the response values.
   
   prepare_amazon_data.m: This script removes keywords with less than 100 occurrence
-  in the reviews (as suggested by the paper)
+  in the reviews (as suggested by the paper).
   
   learn_z_star.m: this script first performs cross validation on the data to learn good
   parameters for Spike-and-Slab linear regression. After that, it uses the best parameters
-  to fit a model to the data. The output is can be used as some kind of a ground truth of
+  to fit a model to the data. The output can be used as some kind of a ground truth of
   data. A visualization of the results can be found in the fig folder.
 
-
+The folder "User Study" contains the relevance feedback of 10 participants on all the words
+in the reviews. The feedbacks are 0:not relevant, 1:relevant, or -1:I don't know.
 
 
