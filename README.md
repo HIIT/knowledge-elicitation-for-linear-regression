@@ -26,34 +26,36 @@ The script [linreg_sns_ep.m](linreg_sns_ep.m) contains the posterior inference a
 [fa, si, converged, subfunctions] = linreg_sns_ep(y, x, pr, op, w_feedbacks, gamma_feedbacks, si)
 ```
 ### Example scenario
- 100 dimensional data, only 10 first coefficients are non-zero, 10 training data is available. Feedback only on relevance of features.
+A "small n, large p" toy example: 100 dimensional data, only 10 first coefficients are non-zero, 10 training data is available. Feedback only on relevance of features.
 
 ```matlab
-%unknown coefficinet values (only first ten are non-zero)
-num_features = 100;
-num_relevant = 10;
-w_star = [randn(num_relevant, 1); zeros(num_features-num_relevant,1)];
-%create 10 training data
-x = randn(10,num_features);
+%% "small n, large p" toy example
+n = 10;      %number of training data
+p = 100;     %number of coefficients or features
+p_star = 10; %number of relevant coefficients
+%unknown, true coefficient values (only first p_star are non-zero)
+w_star = [randn(p_star, 1); zeros(p-p_star,1)];
+%create n, p dimensional training data
+x = randn(n,p);
 y = normrnd(x*w_star, 1);
 %create some test data
-x_test = randn(1000,num_features);
+x_test = randn(1000,p);
 y_test = normrnd(x_test*w_star, 1);
 %initialize the inputs
-pr  = struct('tau2', 1^2 , 'eta2',0.1^2,'p_u', 0.95, 'rho', 0.3, ...
+pr  = struct('tau2', 1^2 , 'eta2',0.1^2,'p_u', 0.95, 'rho', p_star/p, ...
     'sigma2_prior',true,'sigma2_a',1,'sigma2_b',1 );
 op = struct('damp',0.8, 'damp_decay',0.95, 'robust_updates',2, 'verbosity',0,...
     'max_iter',1000, 'threshold',1e-5, 'min_site_prec',1e-6);
-%we only have feedback about relevance of coefficients
-gamma_feedbacks = [[ones(num_relevant,1);zeros(num_features-num_relevant,1)], [1:num_features]'];
-%results with feedback (the proposed model)
+%Assume we only have feedback about relevance of coefficients
+gamma_feedbacks = [[ones(p_star,1);zeros(p-p_star,1)], [1:p]'];
+%results with feedback (the proposed model [1])
 [fa_fb, si, converged, subfunctions] = linreg_sns_ep(y, x, pr, op, [], gamma_feedbacks, []);
 MSE_with_fb = mean((x_test*fa_fb.w.Mean- y_test).^2); 
 %results without feedback (only spike and slab model)
 [fa, si, converged, subfunctions] = linreg_sns_ep(y, x, pr, op, [], [], []);
 MSE_without_fb = mean((x_test*fa.w.Mean- y_test).^2);
 %ridge regression solution
-w_ridge = inv(eye(num_features) + (x'*x)) * (x'*y);
+w_ridge = inv(eye(p) + (x'*x)) * (x'*y);
 MSE_ridge = mean((x_test*w_ridge- y_test).^2);
 
 disp('Mean Squared Error on test data:')
