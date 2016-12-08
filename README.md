@@ -81,7 +81,9 @@ Mode 2 is the most realistic case and it is used for the real data (Amazon and Y
 
 ## Citation
 
-[1] Pedram Daee, Tomi Peltola, Marta Soare and Samuel Kaski (2016). **Knowledge Elicitation via Sequential Probabilistic Inference for High-Dimensional Prediction**
+[1] Pedram Daee, Tomi Peltola, Marta Soare and Samuel Kaski (2017). **Knowledge Elicitation via Sequential Probabilistic Inference for High-Dimensional Prediction**. Submitted. [arxiv link will be added].
+
+[2] Pedram Daee, Tomi Peltola, Marta Soare and Samuel Kaski (2016). **Probabilistic Expert Knowledge Elicitation of Feature Relevances in Sparse Linear Regression**. In FILM 2016, NIPS Workshop on Future of Interactive Learning Machines. [[Pdf](http://www.filmnips.com/wp-content/uploads/2016/11/FILM-NIPS2016_paper_36.pdf)]
 
 ## Team
 
