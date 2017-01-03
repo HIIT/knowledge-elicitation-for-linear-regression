@@ -67,7 +67,7 @@ For more examples please check the main scripts.
 
 ## Simulation and real data study 
 
-The starting point of the code are one of the main scripts.
+The starting point of the code is one of the main scripts.
 [main.m](main.m) runs the simulation for fixed number of training data and dimensions.
 In [main_all.m](main_all.m) the number of training data or dimensions can be arrays, e.g, 2:10:300.
 [main_real_data.m](main_real_data.m) is for real data. Your data should contain a matrix of X with size (n by p) and a matrix of Y with size (n by 1). In the code there is an example of using the method for Amazon and Yelp dataset. 
@@ -91,7 +91,7 @@ Extended abstract:
 
 ## Team
 
-[![Pedram Daee](https://sites.google.com/site/pedramdaee/_/rsrc/1428612543885/home/Pedram.jpg?height=200&width=152)](https://github.com/PedramDaee) | [![Tomi Peltola](http://research.cs.aalto.fi/pml/personnelpics/tomi.jpg?s=500)](https://github.com/to-mi) | [![Marta Soare](https://users.ics.aalto.fi/msoare/picture.jpg?s=144)](https://users.ics.aalto.fi/msoare/)
+[![Pedram Daee](https://sites.google.com/site/pedramdaee/_/rsrc/1428612543885/home/Pedram.jpg?height=200&width=152)](https://github.com/PedramDaee) | [![Tomi Peltola](http://research.cs.aalto.fi/pml/personnelpics/tomi.jpg?s=500)](https://github.com/to-mi) | [![Marta Soare](http://research.cs.aalto.fi/pml/personnelpics/marta.jpg?s=500)](https://users.ics.aalto.fi/msoare/)
 ---|---|---
 [Pedram Daee](https://sites.google.com/site/pedramdaee/home) | [Tomi Peltola](https://github.com/to-mi) | [Marta Soare](https://users.ics.aalto.fi/msoare/)
 
