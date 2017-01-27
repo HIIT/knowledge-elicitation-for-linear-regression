@@ -63,7 +63,7 @@ disp(['The proposed method with user feedback:',num2str(MSE_with_fb)])
 disp(['The proposed method without user feedback:',num2str(MSE_without_fb)])
 disp(['Ridge regression:',num2str(MSE_ridge)])
 ```
-For more examples please check the main scripts.
+More examples about sequential interaction with the user can be found in the main scripts.
 
 ## Simulation and real data study 
 
@@ -91,7 +91,7 @@ Extended abstract:
 
 ## Team
 
-[![Pedram Daee](https://sites.google.com/site/pedramdaee/_/rsrc/1428612543885/home/Pedram.jpg?height=200&width=152)](https://github.com/PedramDaee) | [![Tomi Peltola](http://research.cs.aalto.fi/pml/personnelpics/tomi.jpg?s=500)](https://github.com/to-mi) | [![Marta Soare](http://research.cs.aalto.fi/pml/personnelpics/marta.jpg?s=500)](https://users.ics.aalto.fi/msoare/)
+[![Pedram Daee](https://sites.google.com/site/pedramdaee/_/rsrc/1428612543885/home/Pedram.jpg?height=100&width=76)](https://github.com/PedramDaee) | [![Tomi Peltola](http://research.cs.aalto.fi/pml/personnelpics/tomi.jpg?s=500)](https://github.com/to-mi) | [![Marta Soare](http://research.cs.aalto.fi/pml/personnelpics/marta.jpg?s=500)](https://users.ics.aalto.fi/msoare/)
 ---|---|---
 [Pedram Daee](https://sites.google.com/site/pedramdaee/home) | [Tomi Peltola](https://github.com/to-mi) | [Marta Soare](https://users.ics.aalto.fi/msoare/)
 
