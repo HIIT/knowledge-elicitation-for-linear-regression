@@ -104,18 +104,18 @@ for fig_num=1:3
     end
     %Random
     method_ind = find(strcmp('Random', Method_list));
-    plot([0],data(1,method_ind),'-^','LineWidth',2,'MarkerSize',8,'Color',[0,0.5,0]);
+    p1 = plot([0],data(1,method_ind),'-^','LineWidth',2,'MarkerSize',8,'Color',[0,0.5,0]);
     plot(MarkerIndices-1,data(MarkerIndices,method_ind),'^','LineWidth',2,'MarkerSize',8,'Color',[0,0.5,0]);
     plot([0:num_iterations-1],data(:,method_ind),'-','LineWidth',2,'Color',[0,0.5,0]);
     %First relevant features, then non-relevant
     method_ind = find(strcmp('First relevant features, then non-relevant', Method_list));
-    plot([0],data(1,method_ind),'-rv','LineWidth',2,'MarkerSize',8);
+    p2 = plot([0],data(1,method_ind),'-rv','LineWidth',2,'MarkerSize',8);
     plot(MarkerIndices-1,data(MarkerIndices,method_ind),'rv','LineWidth',2,'MarkerSize',8);
     plot([0:num_iterations-1],data(:,method_ind),'-r','LineWidth',2);
     %Sequential Experimental Design
     method_ind = max([find(strcmp('Expected information gain, full EP approx', Method_list)), ...
         find(strcmp('Expected information gain, fast approx', Method_list))]);
-    plot([0],data(1,method_ind),'-bs','LineWidth',2,'MarkerSize',8);
+    p3 = plot([0],data(1,method_ind),'-bs','LineWidth',2,'MarkerSize',8);
     plot(MarkerIndices-1,data(MarkerIndices,method_ind),'bs','LineWidth',2,'MarkerSize',8);
     plot([0:num_iterations-1],data(:,method_ind),'-b','LineWidth',2);
     
@@ -123,20 +123,19 @@ for fig_num=1:3
         %non-sequential method (if needed)
         method_ind = max([find(strcmp('Expected information gain, full EP approx, non-sequential', Method_list)), ...
             find(strcmp('Expected information gain, fast approx, non-sequential', Method_list))]);
-        plot([0],data(1,method_ind),'-mo','LineWidth',2,'MarkerSize',8);
+        p4 = plot([0],data(1,method_ind),'-mo','LineWidth',2,'MarkerSize',8);
         plot(MarkerIndices-1,data(MarkerIndices,method_ind),'mo','LineWidth',2,'MarkerSize',8);
         plot([0:num_iterations-1],data(:,method_ind),'-m','LineWidth',2);
-        legend({'Random', '','','First relevant features, then non-relevant','','', ...
-            'Sequential Experimental Design','','', 'Non-sequential Experimental Design'},'FontSize',14)
+        legend([p1,p2,p3,p4],{'Random','First relevant features, then non-relevant', ...
+            'Sequential Experimental Design', 'Non-sequential Experimental Design'},'FontSize',14);
     else
         %we don't need to plot ground truth for simulated data 
         %Ground truth (all feedbacks)
         method_ind = find(strcmp('Ground truth - all feedback', Method_list));
-        plot([0:num_iterations-1],data(:,method_ind),'--k','LineWidth',2);
-        legend({'Random', '','','First relevant features, then non-relevant','','', ...
-            'Sequential Experimental Design','','', 'Ground truth (all feedbacks)'},'FontSize',14) 
+        p4 = plot([0:num_iterations-1],data(:,method_ind),'--k','LineWidth',2);
+        legend([p1,p2,p3,p4],{'Random','First relevant features, then non-relevant', ...
+            'Sequential Experimental Design', 'Ground truth (all feedbacks)'},'FontSize',14);        
     end
     % legend boxoff
     hold off
-
 end
