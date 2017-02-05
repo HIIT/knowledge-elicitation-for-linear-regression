@@ -104,11 +104,8 @@ for run = 1:num_runs
             end
             if find(strcmp('Ground truth - all feedback', method_name))
                 %calculate the posterior based on all feedbacks
-                for feature_index = 1:size(X_train,1)
-                    %new_fb_value = user_feedback(feature_index, theta_star, z_star, MODE, sparse_params);
-                    Feedback = [Feedback; all_feedback(feature_index) , feature_index];
-                end
-                 posterior = calculate_posterior(X_train, Y_train, Feedback, ...
+                Feedback = [all_feedback,[1:num_features]'];
+                posterior = calculate_posterior(X_train, Y_train, Feedback, ...
                      MODE, sparse_params, sparse_options);                                            
             end
             Y_hat = X_test'*posterior.mean;
