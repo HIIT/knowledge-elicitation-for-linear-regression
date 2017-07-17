@@ -83,7 +83,7 @@ Mode 2 is the most realistic case and it is used for the real data (Amazon and Y
 
 If you are using this source code in your research please consider citing us:
 
-[1] Pedram Daee, Tomi Peltola, Marta Soare and Samuel Kaski. **Knowledge Elicitation via Sequential Probabilistic Inference for High-Dimensional Prediction**, *Machine Learning*, 2017, DOI 10.1007/s10994-017-5651-7 [[link](http://rdcu.be/t9KF)].
+[1] Pedram Daee, Tomi Peltola, Marta Soare and Samuel Kaski. **Knowledge Elicitation via Sequential Probabilistic Inference for High-Dimensional Prediction**, *Machine Learning*, 2017, DOI: 10.1007/s10994-017-5651-7 [[link](https://link.springer.com/article/10.1007/s10994-017-5651-7)].
 
 An extended abstract of the *Machine Learning* paper can be found here:  
 
